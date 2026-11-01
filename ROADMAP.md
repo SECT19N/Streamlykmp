@@ -8,10 +8,10 @@ states (loading / error / empty / offline) and TV navigation are never cut.
 - [x] Review requirements and the channel list format
 - [x] KMP project (Android + iOS, shared Compose UI), minSdk 23
 - [x] Dependencies: Ktor, serialization, Koin, Coil 3, Navigation, Media3
-- [ ] Package-by-feature skeleton (`core`, `home`, `details`, `search`, `livetv`, `player`)
-- [ ] MVI base (`State` / `Intent` / `Effect` + base ViewModel)
-- [ ] TMDB key via `local.properties`
-- [ ] Android TV manifest (leanback launcher), navigation shell
+- [X] Package-by-feature skeleton (`core`, `home`, `details`, `search`, `livetv`, `player`)
+- [X] MVI base (`State` / `Intent` / `Effect` + base ViewModel)
+- [X] TMDB key via `local.properties`
+- [X] Android TV manifest (leanback launcher), navigation shell
 
 ## 2 Nov: Live TV
 
