@@ -1,31 +1,32 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+# Streamly
 
-* [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+Movies, TV shows (TMDB) and live TV (HLS) for Android mobile and Android TV, built with
+Kotlin Multiplatform and Compose Multiplatform. Architecture: MVI.
 
-* [/shared](./shared/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./shared/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./shared/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./shared/src/jvmMain/kotlin)
-    folder is the appropriate location.
+See [ROADMAP.md](./ROADMAP.md) for progress and open questions.
 
-### Running the apps
+## Structure
+- `androidApp`: Android entry point (mobile + TV)
+- `shared`: shared code and UI (`commonMain`), platform code (`androidMain`, `iosMain`)
+- `iosApp`: Xcode project (optional target, requires a Mac)
 
-Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:
+## Requirements
+- Android Studio with its bundled JBR (the system JDK may be too new for Gradle/AGP)
+- minSdk 23 (Android 6.0)
+- A free TMDB API key, added to `local.properties` (not committed):
+  ```
+  TMDB_API_KEY=your_key_here
+  ```
 
-- Android app: `./gradlew :androidApp:assembleDebug`
-- iOS app: open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+## Build
+```
+./gradlew :androidApp:assembleDebug
+```
 
-### Running tests
-
-Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
-
-- Android tests: `./gradlew :shared:testAndroidHostTest`
-- iOS tests: `./gradlew :shared:iosSimulatorArm64Test`
+## Tests
+```
+./gradlew :shared:testAndroidHostTest
+```
 
 ---
-
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+This product uses the TMDB API but is not endorsed or certified by TMDB.
