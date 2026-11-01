@@ -6,11 +6,13 @@ Kotlin Multiplatform and Compose Multiplatform. Architecture: MVI.
 See [ROADMAP.md](./ROADMAP.md) for progress and open questions.
 
 ## Structure
+
 - `androidApp`: Android entry point (mobile + TV)
 - `shared`: shared code and UI (`commonMain`), platform code (`androidMain`, `iosMain`)
 - `iosApp`: Xcode project (optional target, requires a Mac)
 
 ## Requirements
+
 - Android Studio with its bundled JBR (the system JDK may be too new for Gradle/AGP)
 - minSdk 23 (Android 6.0)
 - A free TMDB API key, added to `local.properties` (not committed):
@@ -19,11 +21,13 @@ See [ROADMAP.md](./ROADMAP.md) for progress and open questions.
   ```
 
 ## Build
+
 ```
 ./gradlew :androidApp:assembleDebug
 ```
 
 ## Tests
+
 ```
 ./gradlew :shared:testAndroidHostTest
 ```
