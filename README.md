@@ -3,7 +3,7 @@
 Movies, TV shows (TMDB) and live TV (HLS) for Android mobile and Android TV, built with
 Kotlin Multiplatform and Compose Multiplatform. Architecture: MVI.
 
-See [ROADMAP.md](./ROADMAP.md) for progress and open questions.
+See [ROADMAP.md](./ROADMAP.md) for planned work and progress.
 
 ## Structure
 

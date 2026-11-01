@@ -5,7 +5,7 @@ states (loading / error / empty / offline) and TV navigation are never cut.
 
 ## 1 Nov: Setup
 
-- [x] Read spec and `channels.json`, list questions for the interviewers
+- [x] Review requirements and the channel list format
 - [x] KMP project (Android + iOS, shared Compose UI), minSdk 23
 - [x] Dependencies: Ktor, serialization, Koin, Coil 3, Navigation, Media3
 - [ ] Package-by-feature skeleton (`core`, `home`, `details`, `search`, `livetv`, `player`)
@@ -47,16 +47,4 @@ states (loading / error / empty / offline) and TV navigation are never cut.
 ## 7 Nov: Ship (buffer day, no new features)
 
 - [ ] Debug/signed APKs for mobile and TV
-- [ ] README final pass, assumptions, commit history check
-
-## Open questions for the interviewers
-
-1. `channels.json` has no `logo` field: placeholder / initials, or will a new file follow?
-2. All streams are `http://` (some raw IPs): is allowing cleartext traffic for them OK?
-3. Channel list: fetch from a URL, or bundle the JSON?
-4. Will the streams stay live during the review period?
-5. Offline: friendly error + retry, or persistent caching expected?
-6. Android TV: separate leanback entry point sharing the Compose UI acceptable?
-7. TMDB language/region: English?
-8. iOS: structured for it, but not buildable without a Mac. OK?
-9. Live TV: category filtering wanted?
+- [ ] README final pass and documented assumptions
