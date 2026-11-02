@@ -46,7 +46,10 @@ class Mp2AudioDecoderTest {
             val frames = sample.size / frameSize
             val pcm = ByteBuffer.allocate(frames * 4608).order(ByteOrder.LITTLE_ENDIAN)
             for (i in 0 until frames) {
-                val out = decoder.decode(sample.copyOfRange(i * frameSize, (i + 1) * frameSize), i * 24_000L)
+                val out = decoder.decode(
+                    sample.copyOfRange(i * frameSize, (i + 1) * frameSize),
+                    i * 24_000L
+                )
                 assertNotNull(out, "frame $i produced no output")
                 assertEquals(4608, out.size)
                 pcm.put(out)
@@ -80,7 +83,8 @@ class Mp2AudioDecoderTest {
     fun aSampleWithoutAValidHeaderIsSkipped() {
         val decoder = Mp2AudioDecoder()
         try {
-            val corrupt = sample.copyOfRange(0, frameSize).also { it[1] = 0xFB.toByte() } // not Layer II
+            val corrupt =
+                sample.copyOfRange(0, frameSize).also { it[1] = 0xFB.toByte() } // not Layer II
             // No Layer II header: nothing is decoded or emitted, and the renderer carries on.
             assertEquals(null, decoder.decode(corrupt, 0))
         } finally {

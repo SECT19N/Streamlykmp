@@ -33,7 +33,8 @@ internal class Mp2AudioDecoder :
 
     override fun getName(): String = "Mp2AudioDecoder"
 
-    override fun createInputBuffer() = DecoderInputBuffer(DecoderInputBuffer.BUFFER_REPLACEMENT_MODE_DIRECT)
+    override fun createInputBuffer() =
+        DecoderInputBuffer(DecoderInputBuffer.BUFFER_REPLACEMENT_MODE_DIRECT)
 
     override fun createOutputBuffer() = SimpleDecoderOutputBuffer { releaseOutputBuffer(it) }
 

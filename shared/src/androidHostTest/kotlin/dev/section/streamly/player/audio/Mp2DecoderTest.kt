@@ -68,11 +68,16 @@ class Mp2DecoderTest {
         assertTrue(rmsError < 2.0, "$kbps kbps: RMS error $rmsError LSB")
     }
 
-    @Test fun matchesFfmpeg64k() = assertMatchesFfmpeg(64) // low-rate quantizer tables
-    @Test fun matchesFfmpeg96k() = assertMatchesFfmpeg(96)
-    @Test fun matchesFfmpeg128k() = assertMatchesFfmpeg(128)
-    @Test fun matchesFfmpeg192k() = assertMatchesFfmpeg(192)
-    @Test fun matchesFfmpeg320k() = assertMatchesFfmpeg(320)
+    @Test
+    fun matchesFfmpeg64k() = assertMatchesFfmpeg(64) // low-rate quantizer tables
+    @Test
+    fun matchesFfmpeg96k() = assertMatchesFfmpeg(96)
+    @Test
+    fun matchesFfmpeg128k() = assertMatchesFfmpeg(128)
+    @Test
+    fun matchesFfmpeg192k() = assertMatchesFfmpeg(192)
+    @Test
+    fun matchesFfmpeg320k() = assertMatchesFfmpeg(320)
 
     @Test
     fun matrixingMatchesTheDefinition() {
@@ -125,7 +130,8 @@ class Mp2DecoderTest {
         val noSync = frame.copyOf().also { it[0] = 0 }
         assertEquals(0, Mp2Decoder().decodeFrame(noSync, 0, noSync.size, out))
 
-        val badRate = frame.copyOf().also { it[2] = (it[2].toInt() or 0x0C).toByte() } // rate index 3
+        val badRate =
+            frame.copyOf().also { it[2] = (it[2].toInt() or 0x0C).toByte() } // rate index 3
         assertEquals(0, Mp2Decoder().decodeFrame(badRate, 0, badRate.size, out))
     }
 
