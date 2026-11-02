@@ -31,6 +31,12 @@ local favorites plus the image cache.
 - [x] Full-screen playback, basic controls, retry on error
 - [x] Cleartext HTTP config for the stream hosts
 - [x] D-pad handling
+- [x] Audio fix (unexpected finding on a real phone: 15 channels use MP2 audio, which Android
+  can't decode on most devices): in-app MP2 decoder as an ExoPlayer fallback renderer, tested
+  against FFmpeg (see README, "Known limitations")
+- [x] Rojava HD stayed silent: its playlist's CODECS lists only video, so ExoPlayer skipped the
+  audio track; chunkless HLS preparation is now off so tracks come from the stream itself
+- [ ] Confirm audio on a physical phone (Huawei Y9a) and an API 23 device
 
 ## 4 Nov: TMDB Home
 
