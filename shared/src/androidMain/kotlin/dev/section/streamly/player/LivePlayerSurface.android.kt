@@ -23,7 +23,9 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.ui.PlayerView
 import dev.section.streamly.player.audio.StreamlyRenderersFactory
 
@@ -70,7 +72,12 @@ actual fun LivePlayerSurface(
     }
 
     LaunchedEffect(player, streamUrl, retryToken) {
-        player.setMediaItem(MediaItem.fromUri(streamUrl))
+        // Some playlists (Rojava HD) declare only the video codec in CODECS. Chunkless preparation
+        // trusts that and plays them without audio, so let ExoPlayer read the tracks from the stream.
+        val source = HlsMediaSource.Factory(DefaultDataSource.Factory(context))
+            .setAllowChunklessPreparation(false)
+            .createMediaSource(MediaItem.fromUri(streamUrl))
+        player.setMediaSource(source)
         player.playWhenReady = latestPlayWhenReady
         player.prepare()
     }
