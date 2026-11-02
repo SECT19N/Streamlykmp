@@ -3,6 +3,7 @@ package dev.section.streamly.navigation
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
@@ -29,15 +30,40 @@ import dev.section.streamly.home.HomeScreen
 import dev.section.streamly.livetv.LiveTvScreen
 import dev.section.streamly.player.PlayerScreen
 import dev.section.streamly.search.SearchScreen
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
+import streamlykmp.shared.generated.resources.Res
+import streamlykmp.shared.generated.resources.ic_favorite
+import streamlykmp.shared.generated.resources.ic_favorite_filled
+import streamlykmp.shared.generated.resources.ic_home
+import streamlykmp.shared.generated.resources.ic_home_filled
+import streamlykmp.shared.generated.resources.ic_live_tv
+import streamlykmp.shared.generated.resources.ic_live_tv_filled
+import streamlykmp.shared.generated.resources.ic_search
+import streamlykmp.shared.generated.resources.ic_search_filled
 
-private class TopLevelDestination(val route: Route, val label: String)
+private class TopLevelDestination(
+    val route: Route,
+    val label: String,
+    val icon: DrawableResource,
+    val selectedIcon: DrawableResource,
+)
 
 private val topLevelDestinations = listOf(
-    TopLevelDestination(Route.Home, "Home"),
-    TopLevelDestination(Route.Search, "Search"),
-    TopLevelDestination(Route.LiveTv, "Live TV"),
-    TopLevelDestination(Route.Favorites, "Favorites"),
+    TopLevelDestination(Route.Home, "Home", Res.drawable.ic_home, Res.drawable.ic_home_filled),
+    TopLevelDestination(Route.Search, "Search", Res.drawable.ic_search, Res.drawable.ic_search_filled),
+    TopLevelDestination(Route.LiveTv, "Live TV", Res.drawable.ic_live_tv, Res.drawable.ic_live_tv_filled),
+    TopLevelDestination(Route.Favorites, "Favorites", Res.drawable.ic_favorite, Res.drawable.ic_favorite_filled),
 )
+
+/** The label next to the icon already names the tab, so the icon itself is decorative. */
+@Composable
+private fun NavIcon(destination: TopLevelDestination, selected: Boolean) {
+    Icon(
+        painter = painterResource(if (selected) destination.selectedIcon else destination.icon),
+        contentDescription = null,
+    )
+}
 
 /** Width from which the navigation rail replaces the bottom bar (TV, tablets). */
 private val RailMinWidth = 840.dp
@@ -64,7 +90,7 @@ fun AppNavigation() {
                         NavigationBarItem(
                             selected = top == selected,
                             onClick = { navController.navigateTopLevel(top.route) },
-                            icon = {},
+                            icon = { NavIcon(top, top == selected) },
                             label = { Text(top.label) },
                             alwaysShowLabel = true,
                         )
@@ -80,7 +106,7 @@ fun AppNavigation() {
                         NavigationRailItem(
                             selected = top == selected,
                             onClick = { navController.navigateTopLevel(top.route) },
-                            icon = {},
+                            icon = { NavIcon(top, top == selected) },
                             label = { Text(top.label) },
                             alwaysShowLabel = true,
                         )
