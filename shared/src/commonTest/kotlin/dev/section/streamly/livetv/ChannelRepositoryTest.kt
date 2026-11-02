@@ -22,8 +22,11 @@ class ChannelRepositoryTest {
 
     @Test
     fun parsesChannelsWithoutLogoField() {
-        val json = """[{"id":"ch_01","name":"360 HD","category":"Entertainment","streamUrl":"http://1.2.3.4/a.m3u8"}]"""
-        val dtos = Json { ignoreUnknownKeys = true }.decodeFromString(ListSerializer(ChannelDto.serializer()), json)
+        val json =
+            """[{"id":"ch_01","name":"360 HD","category":"Entertainment","streamUrl":"http://1.2.3.4/a.m3u8"}]"""
+        val dtos = Json {
+            ignoreUnknownKeys = true
+        }.decodeFromString(ListSerializer(ChannelDto.serializer()), json)
         assertEquals(1, dtos.size)
         assertNull(dtos.single().logo)
     }
@@ -31,7 +34,15 @@ class ChannelRepositoryTest {
     @Test
     fun mapsValidChannelsAndDropsUnplayableOnes() = runTest {
         val repo = DefaultChannelRepository(
-            FakeSource { listOf(dto("a"), dto(null), dto("b", name = " "), dto("c", url = null), dto("a")) },
+            FakeSource {
+                listOf(
+                    dto("a"),
+                    dto(null),
+                    dto("b", name = " "),
+                    dto("c", url = null),
+                    dto("a")
+                )
+            },
         )
         val channels = repo.getChannels().getOrThrow()
         assertEquals(listOf("a"), channels.map { it.id })

@@ -32,7 +32,8 @@ class LiveTvViewModelTest {
 
     private class FakeRepository(var result: Result<List<Channel>>) : ChannelRepository {
         override suspend fun getChannels() = result
-        override suspend fun getChannel(id: String) = result.getOrNull()?.firstOrNull { it.id == id }
+        override suspend fun getChannel(id: String) =
+            result.getOrNull()?.firstOrNull { it.id == id }
     }
 
     private class FakeConnectivity(initial: Boolean = true) : ConnectivityMonitor {

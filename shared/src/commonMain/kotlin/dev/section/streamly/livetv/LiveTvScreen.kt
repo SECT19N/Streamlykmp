@@ -55,7 +55,10 @@ private fun LiveTvContent(state: LiveTvState, onIntent: (LiveTvIntent) -> Unit) 
         if (state.isOffline) OfflineBanner()
         when {
             state.isLoading -> LoadingView()
-            state.error != null -> ErrorView(state.error, onRetry = { onIntent(LiveTvIntent.Retry) })
+            state.error != null -> ErrorView(
+                state.error,
+                onRetry = { onIntent(LiveTvIntent.Retry) })
+
             state.channels.isEmpty() -> EmptyView("No channels available.")
             else -> {
                 CategoryChips(state.categories, state.selectedCategory) {

@@ -43,7 +43,12 @@ class LiveTvViewModel(
                     }
                 }
                 .onFailure {
-                    setState { copy(isLoading = false, error = "The channel list couldn't be loaded.") }
+                    setState {
+                        copy(
+                            isLoading = false,
+                            error = "The channel list couldn't be loaded."
+                        )
+                    }
                 }
         }
     }

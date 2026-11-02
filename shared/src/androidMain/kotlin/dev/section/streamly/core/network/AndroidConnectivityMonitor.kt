@@ -39,7 +39,8 @@ class AndroidConnectivityMonitor(context: Context) : ConnectivityMonitor {
         trySend(hasInternet())
         // registerNetworkCallback (not registerDefaultNetworkCallback) is available on API 23.
         manager.registerNetworkCallback(
-            NetworkRequest.Builder().addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET).build(),
+            NetworkRequest.Builder().addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .build(),
             callback,
         )
         awaitClose { manager.unregisterNetworkCallback(callback) }
