@@ -51,9 +51,24 @@ private class TopLevelDestination(
 
 private val topLevelDestinations = listOf(
     TopLevelDestination(Route.Home, "Home", Res.drawable.ic_home, Res.drawable.ic_home_filled),
-    TopLevelDestination(Route.Search, "Search", Res.drawable.ic_search, Res.drawable.ic_search_filled),
-    TopLevelDestination(Route.LiveTv, "Live TV", Res.drawable.ic_live_tv, Res.drawable.ic_live_tv_filled),
-    TopLevelDestination(Route.Favorites, "Favorites", Res.drawable.ic_favorite, Res.drawable.ic_favorite_filled),
+    TopLevelDestination(
+        Route.Search,
+        "Search",
+        Res.drawable.ic_search,
+        Res.drawable.ic_search_filled
+    ),
+    TopLevelDestination(
+        Route.LiveTv,
+        "Live TV",
+        Res.drawable.ic_live_tv,
+        Res.drawable.ic_live_tv_filled
+    ),
+    TopLevelDestination(
+        Route.Favorites,
+        "Favorites",
+        Res.drawable.ic_favorite,
+        Res.drawable.ic_favorite_filled
+    ),
 )
 
 /** The label next to the icon already names the tab, so the icon itself is decorative. */
