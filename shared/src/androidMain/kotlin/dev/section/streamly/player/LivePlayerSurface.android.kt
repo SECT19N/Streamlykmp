@@ -25,6 +25,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import dev.section.streamly.player.audio.StreamlyRenderersFactory
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -38,7 +39,7 @@ actual fun LivePlayerSurface(
     val context = LocalContext.current
     val latestOnStatus by rememberUpdatedState(onStatus)
     val latestPlayWhenReady by rememberUpdatedState(playWhenReady)
-    val player = remember { ExoPlayer.Builder(context).build() }
+    val player = remember { ExoPlayer.Builder(context, StreamlyRenderersFactory(context)).build() }
 
     DisposableEffect(player) {
         val listener = object : Player.Listener {
