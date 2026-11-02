@@ -5,6 +5,7 @@ import dev.section.streamly.livetv.data.BundledChannelSource
 import dev.section.streamly.livetv.data.ChannelRepository
 import dev.section.streamly.livetv.data.ChannelSource
 import dev.section.streamly.livetv.data.DefaultChannelRepository
+import dev.section.streamly.player.PlayerViewModel
 import kotlinx.serialization.json.Json
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
@@ -17,4 +18,7 @@ val appModule: Module = module {
     single<ChannelSource> { BundledChannelSource(get()) }
     single<ChannelRepository> { DefaultChannelRepository(get()) }
     viewModel { LiveTvViewModel(get(), get()) }
+
+    // Player: the channel id comes from the navigation route.
+    viewModel { (channelId: String) -> PlayerViewModel(channelId, get(), get()) }
 }
