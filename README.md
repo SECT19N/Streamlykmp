@@ -15,7 +15,7 @@ See [ROADMAP.md](./ROADMAP.md) for planned work and progress.
 
 - Android Studio with its bundled JBR (the system JDK may be too new for Gradle/AGP)
 - minSdk 23 (Android 6.0)
-- A free TMDB API key, added to `local.properties` (not committed):
+- A free TMDB API key, added to `local.properties`:
   ```
   TMDB_API_KEY=your_key_here
   ```
