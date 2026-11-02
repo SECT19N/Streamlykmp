@@ -27,10 +27,10 @@ local favorites plus the image cache.
 
 ## 3 Nov: Player
 
-- [ ] Media3 HLS behind `expect/actual`
-- [ ] Full-screen playback, basic controls, retry on error
-- [ ] Cleartext HTTP config for the stream hosts
-- [ ] D-pad handling
+- [x] Media3 HLS behind `expect/actual`
+- [x] Full-screen playback, basic controls, retry on error
+- [x] Cleartext HTTP config for the stream hosts
+- [x] D-pad handling
 
 ## 4 Nov: TMDB Home
 

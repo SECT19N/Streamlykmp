@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  Live channel streams are served over plain HTTP from fixed hosts (approved by the client).
+  Cleartext is allowed for those hosts only; everything else (TMDB etc.) stays HTTPS-only.
+  Stream playlists use relative segment URLs, so each stream only talks to its own host.
+  If a stream ever redirects to another host, that host has to be added here.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">154.6.189.24</domain>
+        <domain includeSubdomains="false">85.237.89.157</domain>
+        <domain includeSubdomains="false">85.237.89.158</domain>
+    </domain-config>
+</network-security-config>

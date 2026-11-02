@@ -11,6 +11,8 @@ See [ROADMAP.md](./ROADMAP.md) for planned work and progress.
 - Live playback uses the provided `channels.json`, bundled with the app.
 - Channels have no logo, so a placeholder (initials tile) is shown.
 - The stream hosts are plain `http://`, so cleartext traffic is allowed for them (approved).
+  `network_security_config.xml` permits it for the three stream IPs only; all other traffic (e.g.
+  TMDB) stays HTTPS-only. A stream that redirects to a new host needs that host added.
 - Offline: live channels need a network; favorites and cached images are available offline.
 - TMDB content is requested in English.
 

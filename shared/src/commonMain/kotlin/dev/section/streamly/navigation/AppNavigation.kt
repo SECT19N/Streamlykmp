@@ -24,6 +24,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import dev.section.streamly.details.DetailsScreen
 import dev.section.streamly.favorites.FavoritesScreen
 import dev.section.streamly.home.HomeScreen
@@ -140,7 +141,13 @@ fun AppNavigation() {
                 }
                 composable<Route.Favorites> { FavoritesScreen() }
                 composable<Route.Details> { DetailsScreen() }
-                composable<Route.Player> { PlayerScreen() }
+                composable<Route.Player> { entry ->
+                    val route = entry.toRoute<Route.Player>()
+                    PlayerScreen(
+                        channelId = route.channelId,
+                        onBack = { navController.popBackStack() },
+                    )
+                }
             }
         }
     }
