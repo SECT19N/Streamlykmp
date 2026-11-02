@@ -20,10 +20,10 @@ local favorites plus the image cache.
 
 ## 2 Nov: Live TV
 
-- [ ] Navigation shell (bottom bar on phones, rail on TV/tablets)
-- [ ] Channel model + repository (bundled JSON, swappable for a URL)
-- [ ] Live TV list: logo (with fallback), name, category
-- [ ] Loading / error / empty / offline states
+- [x] Navigation shell (bottom bar on phones, rail on TV/tablets)
+- [x] Channel model + repository (bundled JSON, swappable for a URL)
+- [x] Live TV list: logo (with fallback), name, category
+- [x] Loading / error / empty / offline states
 
 ## 3 Nov: Player
 
