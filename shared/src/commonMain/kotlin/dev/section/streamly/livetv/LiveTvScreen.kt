@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilterChip
@@ -64,7 +65,9 @@ private fun LiveTvContent(state: LiveTvState, onIntent: (LiveTvIntent) -> Unit) 
                 CategoryChips(state.categories, state.selectedCategory) {
                     onIntent(LiveTvIntent.SelectCategory(it))
                 }
-                ChannelGrid(state.visibleChannels) { onIntent(LiveTvIntent.ChannelClicked(it.id)) }
+                ChannelGrid(state.visibleChannels, state.selectedCategory) {
+                    onIntent(LiveTvIntent.ChannelClicked(it.id))
+                }
             }
         }
     }
@@ -98,8 +101,17 @@ private fun CategoryChips(
 }
 
 @Composable
-private fun ChannelGrid(channels: List<Channel>, onClick: (Channel) -> Unit) {
+private fun ChannelGrid(
+    channels: List<Channel>,
+    selectedCategory: String?,
+    onClick: (Channel) -> Unit,
+) {
+    val gridState = rememberLazyGridState()
+    // A new filter shows a different list, so start it from the top.
+    LaunchedEffect(selectedCategory) { gridState.scrollToItem(0) }
+
     LazyVerticalGrid(
+        state = gridState,
         columns = GridCells.Adaptive(minSize = 150.dp),
         contentPadding = PaddingValues(16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
