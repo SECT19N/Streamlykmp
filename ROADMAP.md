@@ -60,3 +60,9 @@ local favorites plus the image cache.
 
 - [ ] Debug/signed APKs for mobile and TV
 - [ ] README final pass and documented assumptions
+
+## Optional / later
+
+- [ ] Audio track picker in the player. Only ch_07 and ch_14 have a second audio feed (both
+  labelled "eng", the first is the default); no channel has subtitles or captions. Media3 exposes
+  the tracks via `Player.currentTracks`, so this would be a small menu on the player controls.
