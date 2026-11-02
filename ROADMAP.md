@@ -36,7 +36,7 @@ local favorites plus the image cache.
   against FFmpeg (see README, "Known limitations")
 - [x] Rojava HD stayed silent: its playlist's CODECS lists only video, so ExoPlayer skipped the
   audio track; chunkless HLS preparation is now off so tracks come from the stream itself
-- [ ] Confirm audio on a physical phone (Huawei Y9a) and an API 23 device
+- [x] Confirm audio on a physical phone (Huawei Y9a) and an API 23 device
 
 ## 4 Nov: TMDB Home
 
