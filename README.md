@@ -23,7 +23,8 @@ See [ROADMAP.md](./ROADMAP.md) for planned work and progress.
 - **Live TV:** channel list and full-screen HLS playback (see the limitations below).
 - **About:** app description, TMDB logo and attribution.
 - Favorites is still a placeholder; see the roadmap.
-- Search queries movies and shows together (debounced, no filters or pagination yet). Details show TMDB metadata and cast only, with no playback.
+- Search queries movies and shows together (debounced, no filters or pagination yet). Details show
+  TMDB metadata and cast only, with no playback.
 
 ## Known limitations and findings
 

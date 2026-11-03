@@ -60,7 +60,12 @@ class SearchRepositoryTest {
 
     @Test
     fun dedupesRepeatedEntries() = runTest {
-        val source = FakeSource(movies = listOf(TmdbMediaDto(id = 1, title = "A"), TmdbMediaDto(id = 1, title = "A")))
+        val source = FakeSource(
+            movies = listOf(
+                TmdbMediaDto(id = 1, title = "A"),
+                TmdbMediaDto(id = 1, title = "A")
+            )
+        )
         assertEquals(1, DefaultSearchRepository(source).search("x").getOrThrow().size)
     }
 
@@ -75,7 +80,8 @@ class SearchViewModelTest {
 
     private val heat = MediaItem(1, "Heat", null, true)
 
-    private class FakeRepository(var result: Result<List<MediaItem>>, val latency: Long = 0) : SearchRepository {
+    private class FakeRepository(var result: Result<List<MediaItem>>, val latency: Long = 0) :
+        SearchRepository {
         val queries = mutableListOf<String>()
         override suspend fun search(query: String): Result<List<MediaItem>> {
             queries += query

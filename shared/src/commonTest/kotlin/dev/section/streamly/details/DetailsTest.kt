@@ -81,14 +81,18 @@ class DetailsDataTest {
     @Test
     fun castIsCapped() {
         val cast = (1..30).joinToString(",") { """{"name":"A$it"}""" }
-        val d = json.decodeFromString<TmdbDetailsDto>("""{"id":1,"title":"X","credits":{"cast":[$cast]}}""")
-            .toDomain(true)!!
+        val d =
+            json.decodeFromString<TmdbDetailsDto>("""{"id":1,"title":"X","credits":{"cast":[$cast]}}""")
+                .toDomain(true)!!
         assertEquals(12, d.cast.size)
     }
 
     private class FakeSource(var fail: Boolean = false) : DetailsSource {
-        override suspend fun movie(id: Int) = if (fail) error("boom") else TmdbDetailsDto(id = id, title = "M")
-        override suspend fun show(id: Int) = if (fail) error("boom") else TmdbDetailsDto(id = id, name = "S")
+        override suspend fun movie(id: Int) =
+            if (fail) error("boom") else TmdbDetailsDto(id = id, title = "M")
+
+        override suspend fun show(id: Int) =
+            if (fail) error("boom") else TmdbDetailsDto(id = id, name = "S")
     }
 
     @Test
@@ -188,7 +192,8 @@ class DetailsViewModelTest {
 
     @Test
     fun backEmitsNavigateBack() = runTest {
-        val vm = DetailsViewModel(1, true, FakeRepository(Result.success(details)), FakeConnectivity())
+        val vm =
+            DetailsViewModel(1, true, FakeRepository(Result.success(details)), FakeConnectivity())
         vm.onIntent(DetailsIntent.BackClicked)
         advanceUntilIdle()
         assertEquals(DetailsEffect.NavigateBack, vm.effects.first())

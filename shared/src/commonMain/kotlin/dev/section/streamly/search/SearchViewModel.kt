@@ -55,7 +55,14 @@ class SearchViewModel(
 
     private suspend fun runSearch(query: String) {
         if (query.isBlank()) {
-            setState { copy(isLoading = false, results = emptyList(), error = null, hasSearched = false) }
+            setState {
+                copy(
+                    isLoading = false,
+                    results = emptyList(),
+                    error = null,
+                    hasSearched = false
+                )
+            }
             return
         }
         setState { copy(isLoading = true, error = null) }
