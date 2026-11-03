@@ -15,6 +15,14 @@ See [ROADMAP.md](./ROADMAP.md) for planned work and progress.
   TMDB) stays HTTPS-only. A stream that redirects to a new host needs that host added.
 - Offline: live channels need a network; favorites and cached images are available offline.
 - TMDB content is requested in English.
+- TMDB attribution (logo and the required notice) lives on the About tab, not on Home.
+
+## Features
+
+- **Home:** trending and popular movies and shows from TMDB, with loading, error and offline states.
+- **Live TV:** channel list and full-screen HLS playback (see the limitations below).
+- **About:** app description, TMDB logo and attribution.
+- Search, Details and Favorites are still placeholders; see the roadmap.
 
 ## Known limitations and findings
 
@@ -54,10 +62,12 @@ still a stub.
 
 - Android Studio with its bundled JBR (the system JDK may be too new for Gradle/AGP)
 - minSdk 23 (Android 6.0)
-- A free TMDB API key, added to `local.properties`:
+- A free TMDB account. Add the **API Read Access Token** (the long v4 token) to `local.properties`:
   ```
-  TMDB_API_KEY=your_key_here
+  TmdbApiReadAccessToken=your_read_access_token
   ```
+  Quotes around the value are optional. It is sent as a Bearer header and exposed to shared code
+  through BuildKonfig. If it is missing the app still builds, but Home shows the error state.
 
 ## Build
 
