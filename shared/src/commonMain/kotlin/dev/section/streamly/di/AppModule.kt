@@ -1,5 +1,11 @@
 package dev.section.streamly.di
 
+import dev.section.streamly.core.network.createTmdbClient
+import dev.section.streamly.home.HomeViewModel
+import dev.section.streamly.home.data.DefaultHomeRepository
+import dev.section.streamly.home.data.HomeRepository
+import dev.section.streamly.home.data.HomeSource
+import dev.section.streamly.home.data.TmdbHomeSource
 import dev.section.streamly.livetv.LiveTvViewModel
 import dev.section.streamly.livetv.data.BundledChannelSource
 import dev.section.streamly.livetv.data.ChannelRepository
@@ -18,6 +24,12 @@ val appModule: Module = module {
     single<ChannelSource> { BundledChannelSource(get()) }
     single<ChannelRepository> { DefaultChannelRepository(get()) }
     viewModel { LiveTvViewModel(get(), get()) }
+
+    // Home (TMDB)
+    single { createTmdbClient(get()) }
+    single<HomeSource> { TmdbHomeSource(get()) }
+    single<HomeRepository> { DefaultHomeRepository(get()) }
+    viewModel { HomeViewModel(get(), get()) }
 
     // Player: the channel id comes from the navigation route.
     viewModel { (channelId: String) -> PlayerViewModel(channelId, get(), get()) }

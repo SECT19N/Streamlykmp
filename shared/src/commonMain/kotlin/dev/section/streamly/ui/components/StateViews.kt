@@ -56,10 +56,13 @@ fun EmptyView(message: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun OfflineBanner(modifier: Modifier = Modifier) {
+fun OfflineBanner(
+    modifier: Modifier = Modifier,
+    message: String = "You're offline. Streams can't play until you reconnect.",
+) {
     Surface(modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.errorContainer) {
         Text(
-            "You're offline. Streams can't play until you reconnect.",
+            message,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onErrorContainer,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),

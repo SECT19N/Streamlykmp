@@ -134,7 +134,13 @@ fun AppNavigation() {
                 startDestination = Route.Home,
                 modifier = Modifier.weight(1f),
             ) {
-                composable<Route.Home> { HomeScreen() }
+                composable<Route.Home> {
+                    HomeScreen(
+                        onOpenDetails = { id, isMovie ->
+                            navController.navigate(Route.Details(id, isMovie))
+                        },
+                    )
+                }
                 composable<Route.Search> { SearchScreen() }
                 composable<Route.LiveTv> {
                     LiveTvScreen(onOpenPlayer = { navController.navigate(Route.Player(it)) })
