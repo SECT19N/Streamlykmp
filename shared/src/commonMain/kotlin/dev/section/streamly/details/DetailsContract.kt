@@ -1,0 +1,22 @@
+package dev.section.streamly.details
+
+import dev.section.streamly.core.mvi.UiEffect
+import dev.section.streamly.core.mvi.UiIntent
+import dev.section.streamly.core.mvi.UiState
+import dev.section.streamly.details.domain.MediaDetails
+
+data class DetailsState(
+    val isLoading: Boolean = true,
+    val details: MediaDetails? = null,
+    val error: String? = null,
+    val isOffline: Boolean = false,
+) : UiState
+
+sealed interface DetailsIntent : UiIntent {
+    data object Retry : DetailsIntent
+    data object BackClicked : DetailsIntent
+}
+
+sealed interface DetailsEffect : UiEffect {
+    data object NavigateBack : DetailsEffect
+}
