@@ -38,6 +38,8 @@ import streamlykmp.shared.generated.resources.Res
 import streamlykmp.shared.generated.resources.ic_favorite
 import streamlykmp.shared.generated.resources.ic_favorite_filled
 import streamlykmp.shared.generated.resources.ic_home
+import streamlykmp.shared.generated.resources.ic_info
+import streamlykmp.shared.generated.resources.ic_info_filled
 import streamlykmp.shared.generated.resources.ic_home_filled
 import streamlykmp.shared.generated.resources.ic_live_tv
 import streamlykmp.shared.generated.resources.ic_live_tv_filled
@@ -70,6 +72,12 @@ private val topLevelDestinations = listOf(
         "Favorites",
         Res.drawable.ic_favorite,
         Res.drawable.ic_favorite_filled
+    ),
+    TopLevelDestination(
+        Route.About,
+        "About",
+        Res.drawable.ic_info,
+        Res.drawable.ic_info_filled
     ),
 )
 
@@ -140,10 +148,9 @@ fun AppNavigation() {
                         onOpenDetails = { id, isMovie ->
                             navController.navigate(Route.Details(id, isMovie))
                         },
-                        onOpenAbout = { navController.navigate(Route.About) },
                     )
                 }
-                composable<Route.About> { AboutScreen(onBack = { navController.popBackStack() }) }
+                composable<Route.About> { AboutScreen() }
                 composable<Route.Search> { SearchScreen() }
                 composable<Route.LiveTv> {
                     LiveTvScreen(onOpenPlayer = { navController.navigate(Route.Player(it)) })

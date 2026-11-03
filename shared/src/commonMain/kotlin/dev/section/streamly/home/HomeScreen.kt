@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,7 +27,6 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun HomeScreen(
     onOpenDetails: (id: Int, isMovie: Boolean) -> Unit,
-    onOpenAbout: () -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -41,22 +39,12 @@ fun HomeScreen(
         }
     }
 
-    HomeContent(state, viewModel::onIntent, onOpenAbout)
+    HomeContent(state, viewModel::onIntent)
 }
 
 @Composable
-private fun HomeContent(
-    state: HomeState,
-    onIntent: (HomeIntent) -> Unit,
-    onOpenAbout: () -> Unit,
-) {
+private fun HomeContent(state: HomeState, onIntent: (HomeIntent) -> Unit) {
     Column(Modifier.fillMaxSize()) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            TextButton(onClick = onOpenAbout) { Text("About") }
-        }
         if (state.isOffline) {
             OfflineBanner(message = "You're offline. Movies and shows may be out of date.")
         }
