@@ -57,7 +57,9 @@ class HomeDataTest {
             shows = TmdbPageDto(),
         )
         val rows = DefaultHomeRepository(source).getRows().getOrThrow()
-        assertEquals(listOf(HomeRowType.TrendingMovies, HomeRowType.PopularMovies), rows.map { it.type })
+        assertEquals(
+            listOf(HomeRowType.TrendingMovies, HomeRowType.PopularMovies),
+            rows.map { it.type })
         assertEquals(1, rows.first().items.size)
     }
 

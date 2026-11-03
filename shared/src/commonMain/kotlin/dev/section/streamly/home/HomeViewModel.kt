@@ -21,7 +21,12 @@ class HomeViewModel(
     override fun handleIntent(intent: HomeIntent) {
         when (intent) {
             HomeIntent.Retry -> load()
-            is HomeIntent.ItemClicked -> sendEffect(HomeEffect.OpenDetails(intent.id, intent.isMovie))
+            is HomeIntent.ItemClicked -> sendEffect(
+                HomeEffect.OpenDetails(
+                    intent.id,
+                    intent.isMovie
+                )
+            )
         }
     }
 
