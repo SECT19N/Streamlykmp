@@ -151,25 +151,12 @@ fun AppNavigation() {
                     )
                 }
                 composable<Route.About> { AboutScreen() }
-                composable<Route.Search> {
-                    SearchScreen(
-                        onOpenDetails = { id, isMovie ->
-                            navController.navigate(Route.Details(id, isMovie))
-                        },
-                    )
-                }
+                composable<Route.Search> { SearchScreen() }
                 composable<Route.LiveTv> {
                     LiveTvScreen(onOpenPlayer = { navController.navigate(Route.Player(it)) })
                 }
                 composable<Route.Favorites> { FavoritesScreen() }
-                composable<Route.Details> { entry ->
-                    val route = entry.toRoute<Route.Details>()
-                    DetailsScreen(
-                        id = route.id,
-                        isMovie = route.isMovie,
-                        onBack = { navController.popBackStack() },
-                    )
-                }
+                composable<Route.Details> { DetailsScreen() }
                 composable<Route.Player> { entry ->
                     val route = entry.toRoute<Route.Player>()
                     PlayerScreen(

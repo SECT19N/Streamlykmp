@@ -46,8 +46,8 @@ local favorites plus the image cache.
 
 ## 5 Nov: Details + Search
 
-- [x] Details screen (TMDB metadata only, no playback)
-- [x] Search with debounce, all states
+- [ ] Details screen (TMDB metadata only, no playback)
+- [ ] Search with debounce, all states
 
 ## 6 Nov: Polish
 
