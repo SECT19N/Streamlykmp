@@ -40,9 +40,9 @@ local favorites plus the image cache.
 
 ## 4 Nov: TMDB Home
 
-- [ ] Ktor client + DTOs
-- [ ] Home rows (trending / popular movies and shows)
-- [ ] TMDB attribution
+- [x] Ktor client + DTOs
+- [x] Home rows (trending / popular movies and shows)
+- [x] TMDB attribution
 
 ## 5 Nov: Details + Search
 

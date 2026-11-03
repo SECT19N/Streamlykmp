@@ -38,9 +38,9 @@ import streamlykmp.shared.generated.resources.Res
 import streamlykmp.shared.generated.resources.ic_favorite
 import streamlykmp.shared.generated.resources.ic_favorite_filled
 import streamlykmp.shared.generated.resources.ic_home
+import streamlykmp.shared.generated.resources.ic_home_filled
 import streamlykmp.shared.generated.resources.ic_info
 import streamlykmp.shared.generated.resources.ic_info_filled
-import streamlykmp.shared.generated.resources.ic_home_filled
 import streamlykmp.shared.generated.resources.ic_live_tv
 import streamlykmp.shared.generated.resources.ic_live_tv_filled
 import streamlykmp.shared.generated.resources.ic_search
