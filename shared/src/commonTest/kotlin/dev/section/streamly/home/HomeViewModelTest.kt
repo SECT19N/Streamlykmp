@@ -31,7 +31,18 @@ class HomeViewModelTest {
     )
 
     private class FakeRepository(var result: Result<List<HomeRow>>) : HomeRepository {
-        override suspend fun getRows() = result
+        var loadMoreResult: Result<HomeRow> = Result.failure(RuntimeException("not set"))
+        val refreshFlags = mutableListOf<Boolean>()
+        val loadMoreCalls = mutableListOf<HomeRow>()
+        override suspend fun getRows(refresh: Boolean): Result<List<HomeRow>> {
+            refreshFlags += refresh
+            return result
+        }
+
+        override suspend fun loadMore(row: HomeRow): Result<HomeRow> {
+            loadMoreCalls += row
+            return loadMoreResult
+        }
     }
 
     private class FakeConnectivity(initial: Boolean = true) : ConnectivityMonitor {
@@ -67,6 +78,60 @@ class HomeViewModelTest {
         assertNull(vm.state.value.error)
         advanceUntilIdle()
         assertEquals(rows, vm.state.value.rows)
+    }
+
+    @Test
+    fun retryBypassesCacheButInitialLoadDoesNot() = runTest {
+        val repo = FakeRepository(Result.success(rows))
+        val vm = HomeViewModel(repo, FakeConnectivity())
+        advanceUntilIdle()
+        vm.onIntent(HomeIntent.Retry)
+        advanceUntilIdle()
+        assertEquals(listOf(false, true), repo.refreshFlags)
+    }
+
+    private val pagedRow = HomeRow(
+        HomeRowType.TrendingMovies, listOf(MediaItem(1, "Heat", null, true)), page = 1, totalPages = 3,
+    )
+
+    @Test
+    fun loadMoreReplacesRowAndIgnoresDuplicateRequests() = runTest {
+        val repo = FakeRepository(Result.success(listOf(pagedRow)))
+        val more = pagedRow.copy(items = pagedRow.items + MediaItem(2, "Ronin", null, true), page = 2)
+        repo.loadMoreResult = Result.success(more)
+        val vm = HomeViewModel(repo, FakeConnectivity())
+        advanceUntilIdle()
+
+        vm.onIntent(HomeIntent.LoadMore(HomeRowType.TrendingMovies))
+        vm.onIntent(HomeIntent.LoadMore(HomeRowType.TrendingMovies)) // already in flight
+        assertTrue(HomeRowType.TrendingMovies in vm.state.value.loadingMore)
+        advanceUntilIdle()
+
+        assertEquals(1, repo.loadMoreCalls.size)
+        assertEquals(more, vm.state.value.rows.single())
+        assertTrue(vm.state.value.loadingMore.isEmpty())
+    }
+
+    @Test
+    fun loadMoreOnLastPageDoesNothing() = runTest {
+        val repo = FakeRepository(Result.success(rows)) // single page
+        val vm = HomeViewModel(repo, FakeConnectivity())
+        advanceUntilIdle()
+        vm.onIntent(HomeIntent.LoadMore(HomeRowType.TrendingMovies))
+        advanceUntilIdle()
+        assertTrue(repo.loadMoreCalls.isEmpty())
+    }
+
+    @Test
+    fun loadMoreFailureKeepsRowsWithoutError() = runTest {
+        val repo = FakeRepository(Result.success(listOf(pagedRow)))
+        val vm = HomeViewModel(repo, FakeConnectivity())
+        advanceUntilIdle()
+        vm.onIntent(HomeIntent.LoadMore(HomeRowType.TrendingMovies))
+        advanceUntilIdle()
+        assertEquals(listOf(pagedRow), vm.state.value.rows)
+        assertNull(vm.state.value.error)
+        assertTrue(vm.state.value.loadingMore.isEmpty())
     }
 
     @Test

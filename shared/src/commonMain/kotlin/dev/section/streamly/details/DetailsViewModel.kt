@@ -22,15 +22,15 @@ class DetailsViewModel(
 
     override fun handleIntent(intent: DetailsIntent) {
         when (intent) {
-            DetailsIntent.Retry -> load()
+            DetailsIntent.Retry -> load(refresh = true)
             DetailsIntent.BackClicked -> sendEffect(DetailsEffect.NavigateBack)
         }
     }
 
-    private fun load() {
+    private fun load(refresh: Boolean = false) {
         setState { copy(isLoading = true, error = null) }
         viewModelScope.launch {
-            repository.getDetails(id, isMovie)
+            repository.getDetails(id, isMovie, refresh)
                 .onSuccess { details -> setState { copy(isLoading = false, details = details) } }
                 .onFailure {
                     setState {

@@ -1,5 +1,8 @@
+@file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+
 package dev.section.streamly.navigation
 
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -13,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
@@ -126,7 +130,7 @@ fun AppNavigation() {
     ) { padding ->
         Row(Modifier.fillMaxSize().padding(padding)) {
             if (showNavigation && useRail) {
-                NavigationRail {
+                NavigationRail(modifier = Modifier.focusRestorer().focusGroup()) {
                     topLevelDestinations.forEach { top ->
                         NavigationRailItem(
                             selected = top == selected,
@@ -141,7 +145,8 @@ fun AppNavigation() {
             NavHost(
                 navController = navController,
                 startDestination = Route.Home,
-                modifier = Modifier.weight(1f),
+                // A group keeps D-pad traversal inside the screen until the user moves out of it.
+                modifier = Modifier.weight(1f).focusGroup(),
             ) {
                 composable<Route.Home> {
                     HomeScreen(

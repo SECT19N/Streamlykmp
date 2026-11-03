@@ -1,5 +1,8 @@
+@file:OptIn(ExperimentalComposeUiApi::class)
+
 package dev.section.streamly.search
 
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,16 +12,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -28,10 +40,14 @@ import dev.section.streamly.ui.components.EmptyView
 import dev.section.streamly.ui.components.ErrorView
 import dev.section.streamly.ui.components.LoadingView
 import dev.section.streamly.ui.components.OfflineBanner
+import dev.section.streamly.ui.components.focusRing
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import streamlykmp.shared.generated.resources.Res
 import streamlykmp.shared.generated.resources.ic_search
+
+/** Start fetching the next page when this many items from the end are visible. */
+private const val LoadMoreThreshold = 8
 
 @Composable
 fun SearchScreen(
@@ -74,17 +90,31 @@ private fun SearchContent(state: SearchState, onIntent: (SearchIntent) -> Unit) 
                 EmptyView("No results for \"${state.query.trim()}\".")
 
             state.results.isEmpty() -> Unit // typing; the debounce hasn't fired yet
-            else -> LazyVerticalGrid(
+            else -> {
+                val gridState = rememberLazyGridState()
+                val nearEnd by remember(gridState) {
+                    derivedStateOf {
+                        val info = gridState.layoutInfo
+                        val last = info.visibleItemsInfo.lastOrNull()?.index ?: 0
+                        info.totalItemsCount > 0 && last >= info.totalItemsCount - LoadMoreThreshold
+                    }
+                }
+                LaunchedEffect(nearEnd, state.results.size) {
+                    if (nearEnd) onIntent(SearchIntent.LoadMore)
+                }
+                LazyVerticalGrid(
+                state = gridState,
                 columns = GridCells.Adaptive(130.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().focusRestorer(),
             ) {
                 items(state.results, key = { "${it.isMovie}-${it.id}" }) { item ->
                     PosterCard(item, onClick = {
                         onIntent(SearchIntent.ItemClicked(item.id, item.isMovie))
                     })
+                }
                 }
             }
         }
@@ -98,6 +128,7 @@ private fun SearchField(
     modifier: Modifier = Modifier,
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
@@ -109,10 +140,23 @@ private fun SearchField(
         },
         trailingIcon = {
             if (query.isNotEmpty()) {
-                TextButton(onClick = { onQueryChange("") }) { Text("Clear") }
+                val interaction = remember { MutableInteractionSource() }
+                TextButton(
+                    onClick = { onQueryChange("") },
+                    interactionSource = interaction,
+                    modifier = Modifier
+                        .heightIn(min = 48.dp)
+                        .focusRing(interaction, ButtonDefaults.textShape),
+                ) { Text("Clear") }
             }
         },
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
+        keyboardActions = KeyboardActions(
+            onSearch = {
+                keyboard?.hide()
+                // Hand the D-pad to the results instead of leaving it stuck in the field.
+                focusManager.moveFocus(FocusDirection.Down)
+            },
+        ),
     )
 }

@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
@@ -27,7 +28,7 @@ fun ChannelLogo(channel: Channel, modifier: Modifier = Modifier) {
         } else {
             SubcomposeAsyncImage(
                 model = channel.logoUrl,
-                contentDescription = "${channel.name} logo",
+                contentDescription = null, // the channel name beside it names the card,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize(),
                 loading = { InitialsTile(channel.name) },
@@ -40,7 +41,7 @@ fun ChannelLogo(channel: Channel, modifier: Modifier = Modifier) {
 @Composable
 private fun InitialsTile(name: String) {
     Box(
-        Modifier.fillMaxSize().background(placeholderColor(name)),
+        Modifier.fillMaxSize().clearAndSetSemantics {}.background(placeholderColor(name)),
         contentAlignment = Alignment.Center,
     ) {
         Text(

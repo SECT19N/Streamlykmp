@@ -23,6 +23,9 @@ See [ROADMAP.md](./ROADMAP.md) for planned work and progress.
 - **Live TV:** channel list and full-screen HLS playback (see the limitations below).
 - **About:** app description, TMDB logo and attribution.
 - Favorites is still a placeholder; see the roadmap.
+- Home rows and search results load more pages as you near the end. Results are cached in memory for
+  5 minutes; Retry always refetches, and if a refresh fails the last good result is shown instead.
+  Nothing is persisted across app restarts.
 - Search queries movies and shows together (debounced, no filters or pagination yet). Details show
   TMDB metadata and cast only, with no playback.
 

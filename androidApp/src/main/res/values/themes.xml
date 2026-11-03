@@ -1,0 +1,4 @@
+<resources>
+    <!-- The window shows before Compose draws, so it must match the app's light/dark theme. -->
+    <style name="Theme.Streamly" parent="@android:style/Theme.Material.Light.NoActionBar" />
+</resources>

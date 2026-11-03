@@ -5,7 +5,11 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class TmdbPageDto(val results: List<TmdbMediaDto> = emptyList())
+data class TmdbPageDto(
+    val results: List<TmdbMediaDto> = emptyList(),
+    val page: Int = 1,
+    @SerialName("total_pages") val totalPages: Int = 1,
+)
 
 /** Movies use `title`, shows use `name`; every field is optional so one bad entry can't fail the page. */
 @Serializable

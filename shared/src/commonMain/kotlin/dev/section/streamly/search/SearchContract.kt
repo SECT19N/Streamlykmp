@@ -13,11 +13,15 @@ data class SearchState(
     val isOffline: Boolean = false,
     /** True once a query has completed, so "no results" isn't shown before the first search. */
     val hasSearched: Boolean = false,
+    val page: Int = 1,
+    val canLoadMore: Boolean = false,
+    val isLoadingMore: Boolean = false,
 ) : UiState
 
 sealed interface SearchIntent : UiIntent {
     data class QueryChanged(val query: String) : SearchIntent
     data object Retry : SearchIntent
+    data object LoadMore : SearchIntent
     data class ItemClicked(val id: Int, val isMovie: Boolean) : SearchIntent
 }
 

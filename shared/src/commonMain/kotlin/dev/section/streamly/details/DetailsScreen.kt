@@ -1,5 +1,8 @@
+@file:OptIn(ExperimentalComposeUiApi::class)
+
 package dev.section.streamly.details
 
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -29,6 +32,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -73,6 +82,11 @@ fun DetailsScreen(
 
 @Composable
 private fun DetailsContent(state: DetailsState, onIntent: (DetailsIntent) -> Unit) {
+    val backFocus = remember { FocusRequester() }
+    // Land D-pad users on Back as soon as the page is usable.
+    LaunchedEffect(state.isLoading) {
+        if (!state.isLoading) runCatching { backFocus.requestFocus() }
+    }
     Column(Modifier.fillMaxSize()) {
         if (state.isOffline) {
             OfflineBanner(message = "You're offline. Details may be out of date.")
@@ -89,7 +103,10 @@ private fun DetailsContent(state: DetailsState, onIntent: (DetailsIntent) -> Uni
             }
             BackButton(
                 onClick = { onIntent(DetailsIntent.BackClicked) },
-                modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(8.dp)
+                    .focusRequester(backFocus),
             )
         }
     }
@@ -122,7 +139,11 @@ private fun DetailsBody(details: MediaDetails) {
             Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(details.title, style = MaterialTheme.typography.headlineMedium)
+            Text(
+                details.title,
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.semantics { heading() },
+            )
             details.tagline?.let {
                 Text(
                     it,
@@ -130,7 +151,18 @@ private fun DetailsBody(details: MediaDetails) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            metaLine(details)?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+            metaLine(details)?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.semantics {
+                        // "★" is read as "black star"; say what it means instead.
+                        details.rating?.let { r ->
+                            contentDescription = it.replace("★ ${oneDecimal(r)}", "Rated ${oneDecimal(r)} out of 10")
+                        }
+                    },
+                )
+            }
             if (details.genres.isNotEmpty()) {
                 Text(
                     details.genres.joinToString(" · "),
@@ -143,14 +175,15 @@ private fun DetailsBody(details: MediaDetails) {
                 Text(
                     "Cast",
                     style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(top = 8.dp),
+                    modifier = Modifier.padding(top = 8.dp).semantics { heading() },
                 )
             }
         }
         if (details.cast.isNotEmpty()) {
             LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.focusRestorer(),
             ) {
                 itemsIndexed(details.cast) { _, member -> CastCard(member) }
             }
@@ -187,7 +220,7 @@ private fun Backdrop(details: MediaDetails) {
         if (url != null) {
             SubcomposeAsyncImage(
                 model = url,
-                contentDescription = "${details.title} backdrop",
+                contentDescription = null, // decorative; the title is the heading above
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
                 loading = {},
@@ -205,7 +238,8 @@ private fun CastCard(member: CastMember) {
         Modifier
             .width(96.dp)
             .focusRing(interaction, shape)
-            .focusable(interactionSource = interaction),
+            .focusable(interactionSource = interaction)
+            .semantics(mergeDescendants = true) {},
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
@@ -221,7 +255,7 @@ private fun CastCard(member: CastMember) {
             } else {
                 SubcomposeAsyncImage(
                     model = url,
-                    contentDescription = member.name,
+                    contentDescription = null, // the name below is part of the merged card
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
                     loading = { CastInitial(member.name) },
@@ -240,7 +274,7 @@ private fun CastCard(member: CastMember) {
         member.character?.let {
             Text(
                 it,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
                 maxLines = 2,

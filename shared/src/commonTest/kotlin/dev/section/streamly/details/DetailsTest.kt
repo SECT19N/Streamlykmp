@@ -88,11 +88,39 @@ class DetailsDataTest {
     }
 
     private class FakeSource(var fail: Boolean = false) : DetailsSource {
-        override suspend fun movie(id: Int) =
-            if (fail) error("boom") else TmdbDetailsDto(id = id, title = "M")
+        var calls = 0
+        override suspend fun movie(id: Int): TmdbDetailsDto {
+            calls++
+            return if (fail) error("boom") else TmdbDetailsDto(id = id, title = "M")
+        }
 
-        override suspend fun show(id: Int) =
-            if (fail) error("boom") else TmdbDetailsDto(id = id, name = "S")
+        override suspend fun show(id: Int): TmdbDetailsDto {
+            calls++
+            return if (fail) error("boom") else TmdbDetailsDto(id = id, name = "S")
+        }
+    }
+
+    @Test
+    fun cachedDetailsAvoidSecondRequestUnlessRefreshed() = runTest {
+        val source = FakeSource()
+        val repo = DefaultDetailsRepository(source)
+        repo.getDetails(1, true)
+        repo.getDetails(1, true)
+        assertEquals(1, source.calls)
+        repo.getDetails(1, true, refresh = true)
+        assertEquals(2, source.calls)
+        // Same id as a show is a different title, so it must not hit the movie entry.
+        repo.getDetails(1, false)
+        assertEquals(3, source.calls)
+    }
+
+    @Test
+    fun failedRefreshFallsBackToCachedDetails() = runTest {
+        val source = FakeSource()
+        val repo = DefaultDetailsRepository(source)
+        val first = repo.getDetails(1, true).getOrThrow()
+        source.fail = true
+        assertEquals(first, repo.getDetails(1, true, refresh = true).getOrThrow())
     }
 
     @Test
@@ -136,8 +164,10 @@ class DetailsViewModelTest {
 
     private class FakeRepository(var result: Result<MediaDetails>) : DetailsRepository {
         var lastRequest: Pair<Int, Boolean>? = null
-        override suspend fun getDetails(id: Int, isMovie: Boolean): Result<MediaDetails> {
+        val refreshFlags = mutableListOf<Boolean>()
+        override suspend fun getDetails(id: Int, isMovie: Boolean, refresh: Boolean): Result<MediaDetails> {
             lastRequest = id to isMovie
+            refreshFlags += refresh
             return result
         }
     }
@@ -177,6 +207,7 @@ class DetailsViewModelTest {
         assertNull(vm.state.value.error)
         advanceUntilIdle()
         assertEquals(details, vm.state.value.details)
+        assertEquals(listOf(false, true), repo.refreshFlags) // initial load may use cache, retry may not
     }
 
     @Test

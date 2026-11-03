@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,6 +50,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.section.streamly.ui.components.OfflineBanner
+import dev.section.streamly.ui.components.focusRing
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -277,17 +279,12 @@ private fun ControlButton(
     size: androidx.compose.ui.unit.Dp = 56.dp,
 ) {
     val interaction = remember { MutableInteractionSource() }
-    val focused by interaction.collectIsFocusedAsState()
     IconButton(
         onClick = onClick,
         interactionSource = interaction,
         modifier = modifier
             .size(size)
-            .border(
-                width = if (focused) 3.dp else 0.dp,
-                color = if (focused) Color.White else Color.Transparent,
-                shape = CircleShape,
-            ),
+            .focusRing(interaction, CircleShape),
     ) {
         Icon(
             painter = painterResource(icon),
@@ -300,7 +297,11 @@ private fun ControlButton(
 
 @Composable
 private fun LiveBadge() {
-    Surface(color = Color(0xFFD32F2F), shape = CircleShape) {
+    Surface(
+        color = Color(0xFFD32F2F),
+        shape = CircleShape,
+        modifier = Modifier.semantics { contentDescription = "Live broadcast" },
+    ) {
         Text(
             "LIVE",
             color = Color.White,
@@ -336,7 +337,14 @@ private fun ErrorPanel(
             textAlign = TextAlign.Center,
         )
         if (kind != PlayerErrorKind.NotFound) {
-            Button(onClick = onRetry, modifier = Modifier.focusRequester(retryFocus)) {
+            val interaction = remember { MutableInteractionSource() }
+            Button(
+                onClick = onRetry,
+                interactionSource = interaction,
+                modifier = Modifier
+                    .focusRequester(retryFocus)
+                    .focusRing(interaction, ButtonDefaults.shape),
+            ) {
                 Text("Retry")
             }
         }

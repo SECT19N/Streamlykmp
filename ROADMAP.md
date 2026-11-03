@@ -51,9 +51,13 @@ local favorites plus the image cache.
 
 ## 6 Nov: Polish
 
-- [ ] Android TV focus and navigation on every screen
-- [ ] Accessibility (content descriptions, readable text)
-- [ ] Bonus, in order: pagination, session cache, favorites, search filters
+- [ ] Android TV focus and navigation on every screen (implemented: theme-coloured focus ring, initial
+  focus, focus restoration; still needs a D-pad pass on a TV emulator)
+- [ ] Accessibility (implemented: merged card semantics, headings, live regions; still needs a
+  TalkBack pass)
+- [x] Bonus: pagination (Home rows and Search)
+- [x] Bonus: session cache (5 min, stale fallback when a refresh fails)
+- [ ] Bonus: favorites, search filters
 - [ ] Smoke test on an API 23 phone emulator
 
 ## 7 Nov: Ship (buffer day, no new features)
