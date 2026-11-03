@@ -1,4 +1,6 @@
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -6,6 +8,23 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.buildkonfig)
+}
+
+// TMDB read token comes from local.properties (gitignored). Empty when missing so fresh clones build.
+val localProps = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+
+buildkonfig {
+    packageName = "dev.section.streamly"
+    defaultConfigs {
+        buildConfigField(
+            Type.STRING,
+            "TMDB_READ_TOKEN",
+            localProps.getProperty("TmdbApiReadAccessToken", "").trim().removeSurrounding("\""),
+        )
+    }
 }
 
 kotlin {

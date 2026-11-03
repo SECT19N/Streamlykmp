@@ -70,12 +70,16 @@ class Mp2DecoderTest {
 
     @Test
     fun matchesFfmpeg64k() = assertMatchesFfmpeg(64) // low-rate quantizer tables
+
     @Test
     fun matchesFfmpeg96k() = assertMatchesFfmpeg(96)
+
     @Test
     fun matchesFfmpeg128k() = assertMatchesFfmpeg(128)
+
     @Test
     fun matchesFfmpeg192k() = assertMatchesFfmpeg(192)
+
     @Test
     fun matchesFfmpeg320k() = assertMatchesFfmpeg(320)
 

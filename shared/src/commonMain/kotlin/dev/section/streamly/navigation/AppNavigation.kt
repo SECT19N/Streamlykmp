@@ -25,6 +25,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import dev.section.streamly.about.AboutScreen
 import dev.section.streamly.details.DetailsScreen
 import dev.section.streamly.favorites.FavoritesScreen
 import dev.section.streamly.home.HomeScreen
@@ -38,6 +39,8 @@ import streamlykmp.shared.generated.resources.ic_favorite
 import streamlykmp.shared.generated.resources.ic_favorite_filled
 import streamlykmp.shared.generated.resources.ic_home
 import streamlykmp.shared.generated.resources.ic_home_filled
+import streamlykmp.shared.generated.resources.ic_info
+import streamlykmp.shared.generated.resources.ic_info_filled
 import streamlykmp.shared.generated.resources.ic_live_tv
 import streamlykmp.shared.generated.resources.ic_live_tv_filled
 import streamlykmp.shared.generated.resources.ic_search
@@ -69,6 +72,12 @@ private val topLevelDestinations = listOf(
         "Favorites",
         Res.drawable.ic_favorite,
         Res.drawable.ic_favorite_filled
+    ),
+    TopLevelDestination(
+        Route.About,
+        "About",
+        Res.drawable.ic_info,
+        Res.drawable.ic_info_filled
     ),
 )
 
@@ -134,7 +143,14 @@ fun AppNavigation() {
                 startDestination = Route.Home,
                 modifier = Modifier.weight(1f),
             ) {
-                composable<Route.Home> { HomeScreen() }
+                composable<Route.Home> {
+                    HomeScreen(
+                        onOpenDetails = { id, isMovie ->
+                            navController.navigate(Route.Details(id, isMovie))
+                        },
+                    )
+                }
+                composable<Route.About> { AboutScreen() }
                 composable<Route.Search> { SearchScreen() }
                 composable<Route.LiveTv> {
                     LiveTvScreen(onOpenPlayer = { navController.navigate(Route.Player(it)) })
