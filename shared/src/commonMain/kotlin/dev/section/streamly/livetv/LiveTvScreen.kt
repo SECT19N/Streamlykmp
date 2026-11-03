@@ -2,7 +2,6 @@
 
 package dev.section.streamly.livetv
 
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -24,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.text.style.TextOverflow
@@ -135,7 +135,11 @@ private fun ChannelCard(channel: Channel, onClick: () -> Unit) {
     Card(
         Modifier
             .fillMaxWidth()
-            .clickableCard(onClick = onClick, shape = shape, onClickLabel = "Watch ${channel.name}"),
+            .clickableCard(
+                onClick = onClick,
+                shape = shape,
+                onClickLabel = "Watch ${channel.name}"
+            ),
     ) {
         Column(Modifier.padding(12.dp)) {
             ChannelLogo(channel, Modifier.fillMaxWidth().aspectRatio(16f / 9f))

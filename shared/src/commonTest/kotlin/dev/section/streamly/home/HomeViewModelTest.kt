@@ -91,13 +91,17 @@ class HomeViewModelTest {
     }
 
     private val pagedRow = HomeRow(
-        HomeRowType.TrendingMovies, listOf(MediaItem(1, "Heat", null, true)), page = 1, totalPages = 3,
+        HomeRowType.TrendingMovies,
+        listOf(MediaItem(1, "Heat", null, true)),
+        page = 1,
+        totalPages = 3,
     )
 
     @Test
     fun loadMoreReplacesRowAndIgnoresDuplicateRequests() = runTest {
         val repo = FakeRepository(Result.success(listOf(pagedRow)))
-        val more = pagedRow.copy(items = pagedRow.items + MediaItem(2, "Ronin", null, true), page = 2)
+        val more =
+            pagedRow.copy(items = pagedRow.items + MediaItem(2, "Ronin", null, true), page = 2)
         repo.loadMoreResult = Result.success(more)
         val vm = HomeViewModel(repo, FakeConnectivity())
         advanceUntilIdle()

@@ -2,12 +2,13 @@
 
 package dev.section.streamly.search
 
-import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -15,8 +16,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
@@ -27,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.focusRestorer
@@ -103,18 +103,18 @@ private fun SearchContent(state: SearchState, onIntent: (SearchIntent) -> Unit) 
                     if (nearEnd) onIntent(SearchIntent.LoadMore)
                 }
                 LazyVerticalGrid(
-                state = gridState,
-                columns = GridCells.Adaptive(130.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxSize().focusRestorer(),
-            ) {
-                items(state.results, key = { "${it.isMovie}-${it.id}" }) { item ->
-                    PosterCard(item, onClick = {
-                        onIntent(SearchIntent.ItemClicked(item.id, item.isMovie))
-                    })
-                }
+                    state = gridState,
+                    columns = GridCells.Adaptive(130.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxSize().focusRestorer(),
+                ) {
+                    items(state.results, key = { "${it.isMovie}-${it.id}" }) { item ->
+                        PosterCard(item, onClick = {
+                            onIntent(SearchIntent.ItemClicked(item.id, item.isMovie))
+                        })
+                    }
                 }
             }
         }

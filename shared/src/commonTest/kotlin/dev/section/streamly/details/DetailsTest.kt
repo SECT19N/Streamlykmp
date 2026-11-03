@@ -165,7 +165,11 @@ class DetailsViewModelTest {
     private class FakeRepository(var result: Result<MediaDetails>) : DetailsRepository {
         var lastRequest: Pair<Int, Boolean>? = null
         val refreshFlags = mutableListOf<Boolean>()
-        override suspend fun getDetails(id: Int, isMovie: Boolean, refresh: Boolean): Result<MediaDetails> {
+        override suspend fun getDetails(
+            id: Int,
+            isMovie: Boolean,
+            refresh: Boolean
+        ): Result<MediaDetails> {
             lastRequest = id to isMovie
             refreshFlags += refresh
             return result
@@ -207,7 +211,10 @@ class DetailsViewModelTest {
         assertNull(vm.state.value.error)
         advanceUntilIdle()
         assertEquals(details, vm.state.value.details)
-        assertEquals(listOf(false, true), repo.refreshFlags) // initial load may use cache, retry may not
+        assertEquals(
+            listOf(false, true),
+            repo.refreshFlags
+        ) // initial load may use cache, retry may not
     }
 
     @Test

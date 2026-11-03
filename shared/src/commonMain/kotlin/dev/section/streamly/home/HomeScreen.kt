@@ -2,7 +2,6 @@
 
 package dev.section.streamly.home
 
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,6 +19,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -104,7 +104,14 @@ private fun HomeContent(state: HomeState, onIntent: (HomeIntent) -> Unit) {
                         itemsIndexed(row.items, key = { _, item -> item.id }) { index, item ->
                             PosterCard(
                                 item,
-                                onClick = { onIntent(HomeIntent.ItemClicked(item.id, item.isMovie)) },
+                                onClick = {
+                                    onIntent(
+                                        HomeIntent.ItemClicked(
+                                            item.id,
+                                            item.isMovie
+                                        )
+                                    )
+                                },
                                 modifier = if (index == 0) Modifier.focusRequester(firstCard) else Modifier,
                             )
                         }

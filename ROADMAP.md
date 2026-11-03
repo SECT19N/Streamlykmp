@@ -51,7 +51,8 @@ local favorites plus the image cache.
 
 ## 6 Nov: Polish
 
-- [ ] Android TV focus and navigation on every screen (implemented: theme-coloured focus ring, initial
+- [ ] Android TV focus and navigation on every screen (implemented: theme-coloured focus ring,
+  initial
   focus, focus restoration; still needs a D-pad pass on a TV emulator)
 - [ ] Accessibility (implemented: merged card semantics, headings, live regions; still needs a
   TalkBack pass)

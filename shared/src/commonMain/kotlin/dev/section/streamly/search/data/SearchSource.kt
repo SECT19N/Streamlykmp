@@ -12,8 +12,11 @@ interface SearchSource {
 }
 
 class TmdbSearchSource(private val client: HttpClient) : SearchSource {
-    override suspend fun searchMovies(query: String, page: Int): TmdbPageDto = search("search/movie", query, page)
-    override suspend fun searchShows(query: String, page: Int): TmdbPageDto = search("search/tv", query, page)
+    override suspend fun searchMovies(query: String, page: Int): TmdbPageDto =
+        search("search/movie", query, page)
+
+    override suspend fun searchShows(query: String, page: Int): TmdbPageDto =
+        search("search/tv", query, page)
 
     private suspend fun search(path: String, query: String, page: Int): TmdbPageDto =
         client.get(path) {

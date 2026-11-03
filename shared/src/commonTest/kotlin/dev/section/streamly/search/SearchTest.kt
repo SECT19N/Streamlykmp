@@ -126,7 +126,11 @@ class SearchViewModelTest {
         val queries = mutableListOf<String>()
         val pages = mutableListOf<Int>()
         val refreshFlags = mutableListOf<Boolean>()
-        override suspend fun search(query: String, page: Int, refresh: Boolean): Result<SearchPage> {
+        override suspend fun search(
+            query: String,
+            page: Int,
+            refresh: Boolean
+        ): Result<SearchPage> {
             queries += query
             pages += page
             refreshFlags += refresh

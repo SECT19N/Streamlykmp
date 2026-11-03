@@ -33,7 +33,8 @@ class DefaultSearchRepository(
                     moviePage.results.mapNotNull { it.toDomain(isMovie = true) },
                     showPage.results.mapNotNull { it.toDomain(isMovie = false) },
                 ).distinctBy { it.isMovie to it.id }
-                val result = SearchPage(items, page, maxOf(moviePage.totalPages, showPage.totalPages))
+                val result =
+                    SearchPage(items, page, maxOf(moviePage.totalPages, showPage.totalPages))
                 cache.put(key, result)
                 Result.success(result)
             }

@@ -19,9 +19,9 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import dev.section.streamly.ui.components.clickableCard
 import coil3.compose.SubcomposeAsyncImage
 import dev.section.streamly.home.domain.MediaItem
+import dev.section.streamly.ui.components.clickableCard
 
 @Composable
 fun PosterCard(item: MediaItem, onClick: () -> Unit, modifier: Modifier = Modifier) {

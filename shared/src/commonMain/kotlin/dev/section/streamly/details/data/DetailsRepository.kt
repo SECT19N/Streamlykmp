@@ -9,7 +9,11 @@ interface DetailsRepository {
      * Fails if the request fails or the record has no usable id or title. A recent result is
      * reused unless [refresh] is set; if loading fails, an older result is returned instead.
      */
-    suspend fun getDetails(id: Int, isMovie: Boolean, refresh: Boolean = false): Result<MediaDetails>
+    suspend fun getDetails(
+        id: Int,
+        isMovie: Boolean,
+        refresh: Boolean = false
+    ): Result<MediaDetails>
 }
 
 class DefaultDetailsRepository(
@@ -17,7 +21,11 @@ class DefaultDetailsRepository(
     private val cache: SessionCache<Pair<Int, Boolean>, MediaDetails> = SessionCache(),
 ) : DetailsRepository {
 
-    override suspend fun getDetails(id: Int, isMovie: Boolean, refresh: Boolean): Result<MediaDetails> {
+    override suspend fun getDetails(
+        id: Int,
+        isMovie: Boolean,
+        refresh: Boolean
+    ): Result<MediaDetails> {
         val key = id to isMovie
         if (!refresh) cache.getFresh(key)?.let { return Result.success(it) }
         return try {

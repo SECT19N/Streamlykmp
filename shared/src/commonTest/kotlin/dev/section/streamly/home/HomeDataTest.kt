@@ -29,6 +29,7 @@ class HomeDataTest {
             requestedPages += page
             return page(p)
         }
+
         override suspend fun trendingMovies(page: Int) = page(movies, page)
         override suspend fun trendingShows(page: Int) = page(shows, page)
         override suspend fun popularMovies(page: Int) = page(movies, page)
@@ -81,7 +82,13 @@ class HomeDataTest {
 
     @Test
     fun loadMoreAppendsNextPageAndDedupes() = runTest {
-        val source = FakeSource(movies = TmdbPageDto(listOf(TmdbMediaDto(1, "A"), TmdbMediaDto(2, "B")), page = 1, totalPages = 3))
+        val source = FakeSource(
+            movies = TmdbPageDto(
+                listOf(TmdbMediaDto(1, "A"), TmdbMediaDto(2, "B")),
+                page = 1,
+                totalPages = 3
+            )
+        )
         val repo = DefaultHomeRepository(source)
         val row = repo.getRows().getOrThrow().first { it.type == HomeRowType.TrendingMovies }
         assertTrue(row.canLoadMore)
@@ -96,7 +103,18 @@ class HomeDataTest {
 
     @Test
     fun lastPageCannotLoadMore() = runTest {
-        val row = DefaultHomeRepository(FakeSource(movies = TmdbPageDto(listOf(TmdbMediaDto(1, "A"))))).getRows()
+        val row = DefaultHomeRepository(
+            FakeSource(
+                movies = TmdbPageDto(
+                    listOf(
+                        TmdbMediaDto(
+                            1,
+                            "A"
+                        )
+                    )
+                )
+            )
+        ).getRows()
             .getOrThrow().first()
         assertEquals(false, row.canLoadMore)
     }

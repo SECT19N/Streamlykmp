@@ -1,12 +1,12 @@
 package dev.section.streamly.ui.components
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -66,7 +66,8 @@ fun ErrorView(message: String, onRetry: () -> Unit, modifier: Modifier = Modifie
         Button(
             onClick = onRetry,
             interactionSource = interaction,
-            modifier = Modifier.focusRequester(retryFocus).focusRing(interaction, ButtonDefaults.shape),
+            modifier = Modifier.focusRequester(retryFocus)
+                .focusRing(interaction, ButtonDefaults.shape),
         ) { Text("Retry") }
     }
 }

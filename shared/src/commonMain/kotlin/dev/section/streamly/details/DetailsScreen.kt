@@ -2,7 +2,6 @@
 
 package dev.section.streamly.details
 
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -31,16 +30,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -158,7 +158,8 @@ private fun DetailsBody(details: MediaDetails) {
                     modifier = Modifier.semantics {
                         // "★" is read as "black star"; say what it means instead.
                         details.rating?.let { r ->
-                            contentDescription = it.replace("★ ${oneDecimal(r)}", "Rated ${oneDecimal(r)} out of 10")
+                            contentDescription =
+                                it.replace("★ ${oneDecimal(r)}", "Rated ${oneDecimal(r)} out of 10")
                         }
                     },
                 )
