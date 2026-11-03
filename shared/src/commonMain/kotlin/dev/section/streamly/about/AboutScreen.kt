@@ -1,0 +1,58 @@
+package dev.section.streamly.about
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import org.jetbrains.compose.resources.painterResource
+import streamlykmp.shared.generated.resources.Res
+import streamlykmp.shared.generated.resources.ic_arrow_back
+import streamlykmp.shared.generated.resources.tmdb_logo
+
+const val TMDB_ATTRIBUTION =
+    "This product uses the TMDB API but is not endorsed or certified by TMDB."
+
+@Composable
+fun AboutScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxSize()) {
+        Row(
+            Modifier.padding(horizontal = 4.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(painterResource(Res.drawable.ic_arrow_back), contentDescription = "Back")
+            }
+            Text("About", style = MaterialTheme.typography.titleLarge)
+        }
+        Column(
+            Modifier.verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text("Streamly", style = MaterialTheme.typography.headlineSmall)
+            Text(
+                "Live TV channels, plus movie and show browsing powered by TMDB.",
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Image(
+                painter = painterResource(Res.drawable.tmdb_logo),
+                contentDescription = "The Movie Database (TMDB) logo",
+                modifier = Modifier.width(120.dp),
+            )
+            Text(TMDB_ATTRIBUTION, style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}

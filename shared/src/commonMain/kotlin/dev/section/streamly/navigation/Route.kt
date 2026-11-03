@@ -16,6 +16,9 @@ sealed interface Route {
     data object Favorites : Route
 
     @Serializable
+    data object About : Route
+
+    @Serializable
     data class Details(val id: Int, val isMovie: Boolean) : Route
 
     @Serializable

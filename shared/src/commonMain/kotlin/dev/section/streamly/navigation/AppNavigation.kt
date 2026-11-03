@@ -25,6 +25,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import dev.section.streamly.about.AboutScreen
 import dev.section.streamly.details.DetailsScreen
 import dev.section.streamly.favorites.FavoritesScreen
 import dev.section.streamly.home.HomeScreen
@@ -139,8 +140,10 @@ fun AppNavigation() {
                         onOpenDetails = { id, isMovie ->
                             navController.navigate(Route.Details(id, isMovie))
                         },
+                        onOpenAbout = { navController.navigate(Route.About) },
                     )
                 }
+                composable<Route.About> { AboutScreen(onBack = { navController.popBackStack() }) }
                 composable<Route.Search> { SearchScreen() }
                 composable<Route.LiveTv> {
                     LiveTvScreen(onOpenPlayer = { navController.navigate(Route.Player(it)) })

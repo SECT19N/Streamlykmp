@@ -3,13 +3,16 @@ package dev.section.streamly.home
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -22,12 +25,10 @@ import dev.section.streamly.ui.components.LoadingView
 import dev.section.streamly.ui.components.OfflineBanner
 import org.koin.compose.viewmodel.koinViewModel
 
-private const val TMDB_ATTRIBUTION =
-    "This product uses the TMDB API but is not endorsed or certified by TMDB."
-
 @Composable
 fun HomeScreen(
     onOpenDetails: (id: Int, isMovie: Boolean) -> Unit,
+    onOpenAbout: () -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -40,12 +41,22 @@ fun HomeScreen(
         }
     }
 
-    HomeContent(state, viewModel::onIntent)
+    HomeContent(state, viewModel::onIntent, onOpenAbout)
 }
 
 @Composable
-private fun HomeContent(state: HomeState, onIntent: (HomeIntent) -> Unit) {
+private fun HomeContent(
+    state: HomeState,
+    onIntent: (HomeIntent) -> Unit,
+    onOpenAbout: () -> Unit,
+) {
     Column(Modifier.fillMaxSize()) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            TextButton(onClick = onOpenAbout) { Text("About") }
+        }
         if (state.isOffline) {
             OfflineBanner(message = "You're offline. Movies and shows may be out of date.")
         }
@@ -73,14 +84,6 @@ private fun HomeContent(state: HomeState, onIntent: (HomeIntent) -> Unit) {
                             })
                         }
                     }
-                }
-                item {
-                    Text(
-                        TMDB_ATTRIBUTION,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                    )
                 }
             }
         }
