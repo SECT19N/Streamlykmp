@@ -39,7 +39,9 @@ data class AudioTrack(val id: String, val label: String, val isSelected: Boolean
 fun uniqueAudioLabels(raw: List<String?>): List<String> {
     val base = raw.mapIndexed { i, label -> label?.takeIf { it.isNotBlank() } ?: "Audio ${i + 1}" }
     return base.mapIndexed { i, label ->
-        if (base.count { it == label } > 1) "$label ${base.take(i + 1).count { it == label }}" else label
+        if (base.count { it == label } > 1) "$label ${
+            base.take(i + 1).count { it == label }
+        }" else label
     }
 }
 

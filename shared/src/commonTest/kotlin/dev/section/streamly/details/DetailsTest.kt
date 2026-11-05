@@ -9,17 +9,17 @@ import dev.section.streamly.details.data.TmdbCollectionPartDto
 import dev.section.streamly.details.data.TmdbCollectionRefDto
 import dev.section.streamly.details.data.TmdbDetailsDto
 import dev.section.streamly.details.domain.Fact
+import dev.section.streamly.details.domain.MediaDetails
 import dev.section.streamly.details.domain.facts
 import dev.section.streamly.details.domain.formatMoney
-import dev.section.streamly.details.domain.MediaDetails
 import dev.section.streamly.favorites.data.FavoritesRepository
 import dev.section.streamly.home.domain.MediaItem
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -174,11 +174,14 @@ class DetailsDataTest {
     fun movieCertificationPrefersUsThenAnyCountry() {
         fun cert(body: String) =
             json.decodeFromString<TmdbDetailsDto>(body).toDomain(true)!!.certification
+
         val head = """{"id":1,"title":"X","release_dates":{"results":["""
         assertEquals(
             "PG-13",
-            cert(head + """{"iso_3166_1":"DE","release_dates":[{"certification":"12"}]},
-                {"iso_3166_1":"US","release_dates":[{"certification":""},{"certification":"PG-13"}]}]}}"""),
+            cert(
+                head + """{"iso_3166_1":"DE","release_dates":[{"certification":"12"}]},
+                {"iso_3166_1":"US","release_dates":[{"certification":""},{"certification":"PG-13"}]}]}}"""
+            ),
         )
         assertEquals(
             "12",
@@ -352,7 +355,13 @@ class DetailsViewModelTest {
     @Test
     fun reflectsConnectivity() = runTest {
         val connectivity = FakeConnectivity(initial = false)
-        val vm = DetailsViewModel(1, true, FakeRepository(Result.success(details)), FakeFavorites(), connectivity)
+        val vm = DetailsViewModel(
+            1,
+            true,
+            FakeRepository(Result.success(details)),
+            FakeFavorites(),
+            connectivity
+        )
         advanceUntilIdle()
         assertTrue(vm.state.value.isOffline)
         connectivity.online.value = true
@@ -363,7 +372,13 @@ class DetailsViewModelTest {
     @Test
     fun favoriteStateFollowsRepositoryAndToggles() = runTest {
         val favorites = FakeFavorites()
-        val vm = DetailsViewModel(1, true, FakeRepository(Result.success(details)), favorites, FakeConnectivity())
+        val vm = DetailsViewModel(
+            1,
+            true,
+            FakeRepository(Result.success(details)),
+            favorites,
+            FakeConnectivity()
+        )
         advanceUntilIdle()
         assertFalse(vm.state.value.isFavorite)
 
@@ -382,7 +397,11 @@ class DetailsViewModelTest {
     fun toggleBeforeDetailsLoadedDoesNothing() = runTest {
         val favorites = FakeFavorites()
         val vm = DetailsViewModel(
-            1, true, FakeRepository(Result.failure(RuntimeException("x"))), favorites, FakeConnectivity(),
+            1,
+            true,
+            FakeRepository(Result.failure(RuntimeException("x"))),
+            favorites,
+            FakeConnectivity(),
         )
         advanceUntilIdle()
         vm.onIntent(DetailsIntent.ToggleFavorite)
@@ -393,7 +412,13 @@ class DetailsViewModelTest {
     @Test
     fun backEmitsNavigateBack() = runTest {
         val vm =
-            DetailsViewModel(1, true, FakeRepository(Result.success(details)), FakeFavorites(), FakeConnectivity())
+            DetailsViewModel(
+                1,
+                true,
+                FakeRepository(Result.success(details)),
+                FakeFavorites(),
+                FakeConnectivity()
+            )
         vm.onIntent(DetailsIntent.BackClicked)
         advanceUntilIdle()
         assertEquals(DetailsEffect.NavigateBack, vm.effects.first())
@@ -401,7 +426,13 @@ class DetailsViewModelTest {
 
     @Test
     fun openingACollectionPartEmitsDetailsEffect() = runTest {
-        val vm = DetailsViewModel(1, true, FakeRepository(Result.success(details)), FakeFavorites(), FakeConnectivity())
+        val vm = DetailsViewModel(
+            1,
+            true,
+            FakeRepository(Result.success(details)),
+            FakeFavorites(),
+            FakeConnectivity()
+        )
         advanceUntilIdle()
         vm.onIntent(DetailsIntent.OpenItem(7, true))
         advanceUntilIdle()

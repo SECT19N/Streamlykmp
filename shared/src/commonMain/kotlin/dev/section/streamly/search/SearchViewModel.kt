@@ -48,7 +48,12 @@ class SearchViewModel(
                 val trimmed = intent.query.trim()
                 // A different query is a new search, so the previous filter no longer applies.
                 val changed = trimmed != activeQuery.value
-                setState { copy(query = intent.query, filter = if (changed) SearchFilter.All else filter) }
+                setState {
+                    copy(
+                        query = intent.query,
+                        filter = if (changed) SearchFilter.All else filter
+                    )
+                }
                 activeQuery.value = trimmed
             }
 

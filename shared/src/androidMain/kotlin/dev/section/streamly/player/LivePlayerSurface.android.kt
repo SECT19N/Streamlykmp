@@ -23,15 +23,15 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.common.Tracks
 import androidx.media3.common.TrackSelectionOverride
+import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.ui.PlayerView
-import java.util.Locale
 import dev.section.streamly.player.audio.StreamlyRenderersFactory
+import java.util.Locale
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -154,8 +154,9 @@ internal fun Tracks.audioTracks(): List<AudioTrack> {
 private fun Tracks.findAudio(id: String): Pair<Tracks.Group, Int>? {
     val (g, t) = id.split(":").map { it.toIntOrNull() ?: return null }.takeIf { it.size == 2 }
         ?: return null
-    val group = groups.getOrNull(g)?.takeIf { it.type == C.TRACK_TYPE_AUDIO && t in 0 until it.length }
-        ?: return null
+    val group =
+        groups.getOrNull(g)?.takeIf { it.type == C.TRACK_TYPE_AUDIO && t in 0 until it.length }
+            ?: return null
     return group to t
 }
 

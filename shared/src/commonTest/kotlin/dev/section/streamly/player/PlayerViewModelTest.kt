@@ -161,7 +161,8 @@ class PlayerViewModelTest {
         PlayerErrorKind.entries.forEach { assertNotNull(errorMessage(it)) }
     }
 
-    private val feeds = listOf(AudioTrack("0:0", "English 1", true), AudioTrack("1:0", "English 2", false))
+    private val feeds =
+        listOf(AudioTrack("0:0", "English 1", true), AudioTrack("1:0", "English 2", false))
 
     @Test
     fun audioSwitchIsOfferedOnlyWithSeveralFeeds() = runTest {

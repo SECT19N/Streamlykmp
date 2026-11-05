@@ -75,6 +75,7 @@ private data class StoredFavorite(
     fun toDomain() = MediaItem(id, title, posterPath, isMovie)
 
     companion object {
-        fun from(item: MediaItem) = StoredFavorite(item.id, item.isMovie, item.title, item.posterPath)
+        fun from(item: MediaItem) =
+            StoredFavorite(item.id, item.isMovie, item.title, item.posterPath)
     }
 }

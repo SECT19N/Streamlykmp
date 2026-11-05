@@ -62,7 +62,12 @@ actual fun rememberPlatformModule(): Module {
         module {
             single<ConnectivityMonitor> { AndroidConnectivityMonitor(context) }
             single<Settings> {
-                SharedPreferencesSettings(context.getSharedPreferences("streamly", Context.MODE_PRIVATE))
+                SharedPreferencesSettings(
+                    context.getSharedPreferences(
+                        "streamly",
+                        Context.MODE_PRIVATE
+                    )
+                )
             }
         }
     }

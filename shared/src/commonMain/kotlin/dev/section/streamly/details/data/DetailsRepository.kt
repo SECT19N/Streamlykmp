@@ -65,9 +65,19 @@ class DefaultDetailsRepository(
                 val partId = part.id ?: return@mapNotNull null
                 if (partId == details.id) return@mapNotNull null
                 val title = part.title?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
-                MediaItem(partId, title, part.posterPath?.takeIf { it.isNotBlank() }, isMovie = true)
+                MediaItem(
+                    partId,
+                    title,
+                    part.posterPath?.takeIf { it.isNotBlank() },
+                    isMovie = true
+                )
             }
-        return if (others.isEmpty()) details else details.copy(collection = MediaCollection(name, others))
+        return if (others.isEmpty()) details else details.copy(
+            collection = MediaCollection(
+                name,
+                others
+            )
+        )
     }
 
     private fun staleOr(key: Pair<Int, Boolean>, error: Exception): Result<MediaDetails> =

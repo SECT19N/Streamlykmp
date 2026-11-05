@@ -9,8 +9,6 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodes
-import androidx.compose.ui.test.onNode
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.printToLog
@@ -55,7 +53,12 @@ class AccessibilityTest {
         rule.onRoot().printToLog("A11Y_ERROR")
         rule.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading))
             .assert(SemanticsMatcher("heading is the error title") { texts(it) == listOf("Something went wrong") })
-        rule.onNode(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Assertive))
+        rule.onNode(
+            SemanticsMatcher.expectValue(
+                SemanticsProperties.LiveRegion,
+                LiveRegionMode.Assertive
+            )
+        )
             .assertExists()
         rule.onNode(hasClickAction()).assertExists() // Retry
     }
@@ -70,7 +73,8 @@ class AccessibilityTest {
             }
         }
         rule.onRoot().printToLog("A11Y_STATES")
-        rule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.LiveRegion)).assertCountEquals(3)
+        rule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.LiveRegion))
+            .assertCountEquals(3)
         rule.onNode(SemanticsMatcher("loading is described") {
             it.config.getOrNull(SemanticsProperties.ContentDescription) == listOf("Loading")
         }).assertExists()

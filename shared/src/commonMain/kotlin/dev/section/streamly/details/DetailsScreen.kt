@@ -48,8 +48,8 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -58,7 +58,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.SubcomposeAsyncImage
-import kotlinx.coroutines.launch
 import dev.section.streamly.details.domain.CastMember
 import dev.section.streamly.details.domain.MediaDetails
 import dev.section.streamly.details.domain.facts
@@ -67,6 +66,7 @@ import dev.section.streamly.ui.components.ErrorView
 import dev.section.streamly.ui.components.LoadingView
 import dev.section.streamly.ui.components.OfflineBanner
 import dev.section.streamly.ui.components.focusRing
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -159,7 +159,11 @@ private fun BackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun FavoriteButton(isFavorite: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+private fun FavoriteButton(
+    isFavorite: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val interaction = remember { MutableInteractionSource() }
     IconToggleButton(
         checked = isFavorite,
@@ -252,7 +256,9 @@ private fun DetailsBody(details: MediaDetails, onIntent: (DetailsIntent) -> Unit
                 modifier = Modifier.focusRestorer(),
             ) {
                 items(collection.parts, key = { it.id }) { part ->
-                    PosterCard(part, onClick = { onIntent(DetailsIntent.OpenItem(part.id, part.isMovie)) })
+                    PosterCard(
+                        part,
+                        onClick = { onIntent(DetailsIntent.OpenItem(part.id, part.isMovie)) })
                 }
             }
         }
