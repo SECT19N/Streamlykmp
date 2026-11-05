@@ -4,7 +4,13 @@ import dev.section.streamly.core.network.ConnectivityMonitor
 import dev.section.streamly.details.data.DefaultDetailsRepository
 import dev.section.streamly.details.data.DetailsRepository
 import dev.section.streamly.details.data.DetailsSource
+import dev.section.streamly.details.data.TmdbCollectionDto
+import dev.section.streamly.details.data.TmdbCollectionPartDto
+import dev.section.streamly.details.data.TmdbCollectionRefDto
 import dev.section.streamly.details.data.TmdbDetailsDto
+import dev.section.streamly.details.domain.Fact
+import dev.section.streamly.details.domain.facts
+import dev.section.streamly.details.domain.formatMoney
 import dev.section.streamly.details.domain.MediaDetails
 import dev.section.streamly.favorites.data.FavoritesRepository
 import dev.section.streamly.home.domain.MediaItem
@@ -102,6 +108,21 @@ class DetailsDataTest {
             calls++
             return if (fail) error("boom") else TmdbDetailsDto(id = id, name = "S")
         }
+
+        var collectionFails = false
+        var collectionCalls = 0
+        override suspend fun collection(id: Int): TmdbCollectionDto {
+            collectionCalls++
+            if (collectionFails) error("boom")
+            return TmdbCollectionDto(
+                listOf(
+                    TmdbCollectionPartDto(3, "Part 3", "/3.jpg", "2012-01-01"),
+                    TmdbCollectionPartDto(1, "Part 1", null, "2001-01-01"),
+                    TmdbCollectionPartDto(4, "Unreleased", null, null),
+                    TmdbCollectionPartDto(2, "Part 2", null, "2005-01-01"),
+                ),
+            )
+        }
     }
 
     @Test
@@ -144,8 +165,104 @@ class DetailsDataTest {
         val source = object : DetailsSource {
             override suspend fun movie(id: Int) = TmdbDetailsDto()
             override suspend fun show(id: Int) = TmdbDetailsDto()
+            override suspend fun collection(id: Int) = TmdbCollectionDto()
         }
         assertTrue(DefaultDetailsRepository(source).getDetails(1, true).isFailure)
+    }
+
+    @Test
+    fun movieCertificationPrefersUsThenAnyCountry() {
+        fun cert(body: String) =
+            json.decodeFromString<TmdbDetailsDto>(body).toDomain(true)!!.certification
+        val head = """{"id":1,"title":"X","release_dates":{"results":["""
+        assertEquals(
+            "PG-13",
+            cert(head + """{"iso_3166_1":"DE","release_dates":[{"certification":"12"}]},
+                {"iso_3166_1":"US","release_dates":[{"certification":""},{"certification":"PG-13"}]}]}}"""),
+        )
+        assertEquals(
+            "12",
+            cert(head + """{"iso_3166_1":"DE","release_dates":[{"certification":"12"}]}]}}"""),
+        )
+        assertNull(cert(head + """{"iso_3166_1":"US","release_dates":[{"certification":""}]}]}}"""))
+        assertNull(cert("""{"id":1,"title":"X"}"""))
+    }
+
+    @Test
+    fun showCertificationComesFromContentRatings() {
+        val d = json.decodeFromString<TmdbDetailsDto>(
+            """{"id":2,"name":"S","content_ratings":{"results":[
+            {"iso_3166_1":"GB","rating":"15"},{"iso_3166_1":"US","rating":"TV-MA"}]}}""",
+        ).toDomain(false)!!
+        assertEquals("TV-MA", d.certification)
+    }
+
+    @Test
+    fun mapsExtraFacts() {
+        val movie = json.decodeFromString<TmdbDetailsDto>(
+            """{"id":1,"title":"X","status":"Released","original_language":"fr",
+            "spoken_languages":[{"iso_639_1":"fr","english_name":"French"}],
+            "budget":63000000,"revenue":0}""",
+        ).toDomain(true)!!
+        assertEquals(
+            listOf(
+                Fact("Status", "Released"),
+                Fact("Original language", "French"),
+                Fact("Budget", "$63M"),
+            ),
+            movie.facts(),
+        )
+        val show = json.decodeFromString<TmdbDetailsDto>(
+            """{"id":2,"name":"S","original_language":"ko","number_of_seasons":3,"number_of_episodes":40}""",
+        ).toDomain(false)!!
+        assertEquals(
+            listOf(Fact("Original language", "KO"), Fact("Seasons", "3"), Fact("Episodes", "40")),
+            show.facts(),
+        )
+    }
+
+    @Test
+    fun formatsMoney() {
+        assertEquals("$63M", formatMoney(63_000_000))
+        assertEquals("$1.2B", formatMoney(1_250_000_000))
+        assertEquals("$850K", formatMoney(850_000))
+        assertEquals("$900", formatMoney(900))
+    }
+
+    @Test
+    fun collectionListsOtherFilmsInReleaseOrder() = runTest {
+        val source = FakeSource()
+        val repo = DefaultDetailsRepository(object : DetailsSource by source {
+            override suspend fun movie(id: Int) = TmdbDetailsDto(
+                id = 2, title = "Part 2",
+                belongsToCollection = TmdbCollectionRefDto(9, "The Saga"),
+            )
+        })
+        val c = repo.getDetails(2, true).getOrThrow().collection!!
+        assertEquals("The Saga", c.name)
+        // The film being viewed is left out; the undated one goes last.
+        assertEquals(listOf("Part 1", "Part 3", "Unreleased"), c.parts.map { it.title })
+        assertTrue(c.parts.all { it.isMovie })
+    }
+
+    @Test
+    fun failedCollectionDoesNotFailTheDetails() = runTest {
+        val source = FakeSource().apply { collectionFails = true }
+        val repo = DefaultDetailsRepository(object : DetailsSource by source {
+            override suspend fun movie(id: Int) = TmdbDetailsDto(
+                id = id, title = "M", belongsToCollection = TmdbCollectionRefDto(9, "The Saga"),
+            )
+        })
+        val d = repo.getDetails(1, true).getOrThrow()
+        assertEquals("M", d.title)
+        assertNull(d.collection)
+    }
+
+    @Test
+    fun noCollectionMeansNoCollectionRequest() = runTest {
+        val source = FakeSource()
+        DefaultDetailsRepository(source).getDetails(1, true)
+        assertEquals(0, source.collectionCalls)
     }
 
     @Test
@@ -280,5 +397,14 @@ class DetailsViewModelTest {
         vm.onIntent(DetailsIntent.BackClicked)
         advanceUntilIdle()
         assertEquals(DetailsEffect.NavigateBack, vm.effects.first())
+    }
+
+    @Test
+    fun openingACollectionPartEmitsDetailsEffect() = runTest {
+        val vm = DetailsViewModel(1, true, FakeRepository(Result.success(details)), FakeFavorites(), FakeConnectivity())
+        advanceUntilIdle()
+        vm.onIntent(DetailsIntent.OpenItem(7, true))
+        advanceUntilIdle()
+        assertEquals(DetailsEffect.OpenDetails(7, true), vm.effects.first())
     }
 }

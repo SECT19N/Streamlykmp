@@ -17,8 +17,10 @@ sealed interface DetailsIntent : UiIntent {
     data object Retry : DetailsIntent
     data object BackClicked : DetailsIntent
     data object ToggleFavorite : DetailsIntent
+    data class OpenItem(val id: Int, val isMovie: Boolean) : DetailsIntent
 }
 
 sealed interface DetailsEffect : UiEffect {
     data object NavigateBack : DetailsEffect
+    data class OpenDetails(val id: Int, val isMovie: Boolean) : DetailsEffect
 }

@@ -193,6 +193,9 @@ fun AppNavigation() {
                         id = route.id,
                         isMovie = route.isMovie,
                         onBack = { navController.popBackStack() },
+                        onOpenDetails = { id, isMovie ->
+                            navController.navigate(Route.Details(id, isMovie))
+                        },
                     )
                 }
                 composable<Route.Player> { entry ->

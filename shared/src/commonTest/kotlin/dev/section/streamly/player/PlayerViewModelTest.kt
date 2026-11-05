@@ -160,4 +160,55 @@ class PlayerViewModelTest {
     fun everyErrorKindHasAMessage() {
         PlayerErrorKind.entries.forEach { assertNotNull(errorMessage(it)) }
     }
+
+    private val feeds = listOf(AudioTrack("0:0", "English 1", true), AudioTrack("1:0", "English 2", false))
+
+    @Test
+    fun audioSwitchIsOfferedOnlyWithSeveralFeeds() = runTest {
+        val vm = viewModel()
+        assertFalse(vm.state.value.canSwitchAudio)
+        vm.onIntent(PlayerIntent.AudioTracksChanged(feeds.take(1)))
+        assertFalse(vm.state.value.canSwitchAudio)
+        vm.onIntent(PlayerIntent.AudioTracksChanged(feeds))
+        assertTrue(vm.state.value.canSwitchAudio)
+        assertEquals("English 1", vm.state.value.currentAudio?.label)
+    }
+
+    @Test
+    fun cycleAudioRequestsTheNextFeedAndWraps() = runTest {
+        val vm = viewModel()
+        vm.onIntent(PlayerIntent.AudioTracksChanged(feeds))
+        vm.onIntent(PlayerIntent.CycleAudio)
+        assertEquals("1:0", vm.state.value.requestedAudioId)
+        // The player confirms by reporting the new selection; the next press wraps to the first.
+        vm.onIntent(PlayerIntent.AudioTracksChanged(feeds.map { it.copy(isSelected = !it.isSelected) }))
+        vm.onIntent(PlayerIntent.CycleAudio)
+        assertEquals("0:0", vm.state.value.requestedAudioId)
+    }
+
+    @Test
+    fun cycleAudioDoesNothingWithOneFeed() = runTest {
+        val vm = viewModel()
+        vm.onIntent(PlayerIntent.AudioTracksChanged(feeds.take(1)))
+        vm.onIntent(PlayerIntent.CycleAudio)
+        assertEquals(null, vm.state.value.requestedAudioId)
+    }
+
+    @Test
+    fun changingChannelForgetsTheAudioChoice() = runTest {
+        val vm = viewModel()
+        vm.onIntent(PlayerIntent.AudioTracksChanged(feeds))
+        vm.onIntent(PlayerIntent.CycleAudio)
+        vm.onIntent(PlayerIntent.NextChannel)
+        assertEquals(null, vm.state.value.requestedAudioId)
+        assertTrue(vm.state.value.audioTracks.isEmpty())
+    }
+
+    @Test
+    fun duplicateAndMissingLabelsAreMadeDistinct() {
+        assertEquals(
+            listOf("English 1", "English 2", "Audio 3", "French"),
+            uniqueAudioLabels(listOf("English", "English", null, "French")),
+        )
+    }
 }

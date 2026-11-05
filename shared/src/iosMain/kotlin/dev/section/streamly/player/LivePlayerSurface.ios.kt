@@ -13,6 +13,8 @@ actual fun LivePlayerSurface(
     streamUrl: String,
     playWhenReady: Boolean,
     retryToken: Int,
+    requestedAudioId: String?,
+    onAudioTracks: (List<AudioTrack>) -> Unit,
     onStatus: (PlaybackStatus) -> Unit,
     modifier: Modifier,
 ) {

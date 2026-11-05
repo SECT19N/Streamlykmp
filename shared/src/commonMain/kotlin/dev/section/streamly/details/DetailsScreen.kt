@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -59,6 +61,8 @@ import coil3.compose.SubcomposeAsyncImage
 import kotlinx.coroutines.launch
 import dev.section.streamly.details.domain.CastMember
 import dev.section.streamly.details.domain.MediaDetails
+import dev.section.streamly.details.domain.facts
+import dev.section.streamly.home.PosterCard
 import dev.section.streamly.ui.components.ErrorView
 import dev.section.streamly.ui.components.LoadingView
 import dev.section.streamly.ui.components.OfflineBanner
@@ -76,6 +80,7 @@ fun DetailsScreen(
     id: Int,
     isMovie: Boolean,
     onBack: () -> Unit,
+    onOpenDetails: (id: Int, isMovie: Boolean) -> Unit,
     viewModel: DetailsViewModel = koinViewModel(key = "details-$id-$isMovie") {
         parametersOf(id, isMovie)
     },
@@ -86,6 +91,7 @@ fun DetailsScreen(
         viewModel.effects.collect { effect ->
             when (effect) {
                 DetailsEffect.NavigateBack -> onBack()
+                is DetailsEffect.OpenDetails -> onOpenDetails(effect.id, effect.isMovie)
             }
         }
     }
@@ -112,7 +118,7 @@ private fun DetailsContent(state: DetailsState, onIntent: (DetailsIntent) -> Uni
                     onRetry = { onIntent(DetailsIntent.Retry) },
                 )
 
-                state.details != null -> DetailsBody(state.details)
+                state.details != null -> DetailsBody(state.details, onIntent)
             }
             BackButton(
                 onClick = { onIntent(DetailsIntent.BackClicked) },
@@ -175,7 +181,7 @@ private fun FavoriteButton(isFavorite: Boolean, onToggle: () -> Unit, modifier: 
 }
 
 @Composable
-private fun DetailsBody(details: MediaDetails) {
+private fun DetailsBody(details: MediaDetails, onIntent: (DetailsIntent) -> Unit) {
     val scrollState = rememberScrollState()
     Column(Modifier.fillMaxSize().verticalScroll(scrollState)) {
         Backdrop(details)
@@ -216,6 +222,7 @@ private fun DetailsBody(details: MediaDetails) {
                 )
             }
             Overview(details.overview, scrollState)
+            FactsSection(details)
             if (details.cast.isNotEmpty()) {
                 Text(
                     "Cast",
@@ -233,7 +240,46 @@ private fun DetailsBody(details: MediaDetails) {
                 itemsIndexed(details.cast) { _, member -> CastCard(member) }
             }
         }
+        details.collection?.let { collection ->
+            Text(
+                "Part of ${collection.name}",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(start = 16.dp, top = 8.dp).semantics { heading() },
+            )
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.focusRestorer(),
+            ) {
+                items(collection.parts, key = { it.id }) { part ->
+                    PosterCard(part, onClick = { onIntent(DetailsIntent.OpenItem(part.id, part.isMovie)) })
+                }
+            }
+        }
         Box(Modifier.size(24.dp))
+    }
+}
+
+@Composable
+private fun FactsSection(details: MediaDetails) {
+    val facts = details.facts()
+    if (facts.isEmpty()) return
+    Text(
+        "Details",
+        style = MaterialTheme.typography.titleLarge,
+        modifier = Modifier.padding(top = 8.dp).semantics { heading() },
+    )
+    facts.forEach { fact ->
+        // One announcement per row ("Budget, $63M") instead of two unrelated texts.
+        Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}) {
+            Text(
+                fact.label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
+            Text(fact.value, style = MaterialTheme.typography.bodyMedium)
+        }
     }
 }
 
@@ -364,6 +410,7 @@ private fun CastInitial(name: String) {
 
 internal fun metaLine(details: MediaDetails): String? {
     val parts = buildList {
+        details.certification?.let(::add)
         details.year?.let(::add)
         details.runtimeMinutes?.let { add(formatRuntime(it)) }
         details.rating?.let { add("★ ${oneDecimal(it)}") }

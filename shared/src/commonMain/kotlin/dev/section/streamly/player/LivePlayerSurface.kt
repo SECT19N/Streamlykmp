@@ -9,12 +9,16 @@ import androidx.compose.ui.Modifier
  *
  * @param playWhenReady whether playback should run (false = paused by the user).
  * @param retryToken changing it re-prepares the same [streamUrl].
+ * @param requestedAudioId the [AudioTrack.id] to play, or null for the stream's default.
+ * @param onAudioTracks the stream's audio feeds, reported whenever they or the selection change.
  */
 @Composable
 expect fun LivePlayerSurface(
     streamUrl: String,
     playWhenReady: Boolean,
     retryToken: Int,
+    requestedAudioId: String?,
+    onAudioTracks: (List<AudioTrack>) -> Unit,
     onStatus: (PlaybackStatus) -> Unit,
     modifier: Modifier = Modifier,
 )

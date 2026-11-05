@@ -39,6 +39,8 @@ class PlayerViewModel(
             PlayerIntent.NextChannel -> zap(+1)
             PlayerIntent.PreviousChannel -> zap(-1)
             PlayerIntent.Back -> sendEffect(PlayerEffect.NavigateBack)
+            PlayerIntent.CycleAudio -> cycleAudio()
+            is PlayerIntent.AudioTracksChanged -> setState { copy(audioTracks = intent.tracks) }
             is PlayerIntent.PlayerStatusChanged -> onStatusChanged(intent.status)
         }
     }
@@ -76,6 +78,16 @@ class PlayerViewModel(
         showControls()
     }
 
+    /** Switches to the next audio feed, wrapping around. */
+    private fun cycleAudio() {
+        val tracks = state.value.audioTracks
+        if (tracks.size < 2) return
+        val current = tracks.indexOfFirst { it.isSelected }
+        val next = tracks[(current + 1).mod(tracks.size)]
+        setState { copy(requestedAudioId = next.id) }
+        showControls()
+    }
+
     private fun togglePlayPause() {
         setState { copy(playWhenReady = !playWhenReady) }
         showControls()
@@ -86,7 +98,14 @@ class PlayerViewModel(
         val current = channels.indexOfFirst { it.id == state.value.channel?.id }
         val next = channels[(current + step).mod(channels.size)]
         setState {
-            copy(channel = next, status = PlaybackStatus.Loading, playWhenReady = true)
+            // Track ids belong to the old stream, so the choice and the list start over.
+            copy(
+                channel = next,
+                status = PlaybackStatus.Loading,
+                playWhenReady = true,
+                audioTracks = emptyList(),
+                requestedAudioId = null,
+            )
         }
         showControls()
     }

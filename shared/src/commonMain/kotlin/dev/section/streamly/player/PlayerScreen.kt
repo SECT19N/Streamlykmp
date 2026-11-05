@@ -116,6 +116,8 @@ private fun PlayerContent(state: PlayerState, onIntent: (PlayerIntent) -> Unit) 
                 streamUrl = channel.streamUrl,
                 playWhenReady = state.playWhenReady,
                 retryToken = state.retryToken,
+                requestedAudioId = state.requestedAudioId,
+                onAudioTracks = { onIntent(PlayerIntent.AudioTracksChanged(it)) },
                 onStatus = { onIntent(PlayerIntent.PlayerStatusChanged(it)) },
                 modifier = Modifier.fillMaxSize(),
             )
@@ -233,6 +235,9 @@ private fun ControlsOverlay(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
+            if (showCenterControls && state.canSwitchAudio) {
+                AudioButton(state.currentAudio, onClick = { onIntent(PlayerIntent.CycleAudio) })
+            }
             if (showCenterControls) LiveBadge()
         }
 
@@ -290,6 +295,26 @@ private fun ControlButton(
             tint = Color.White,
             modifier = Modifier.size(size * 0.6f),
         )
+    }
+}
+
+/** Cycles through the stream's audio feeds; with two feeds that is a plain toggle. */
+@Composable
+private fun AudioButton(current: AudioTrack?, onClick: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val label = current?.label ?: "Audio"
+    Button(
+        onClick = onClick,
+        interactionSource = interaction,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Black.copy(alpha = 0.55f),
+            contentColor = Color.White,
+        ),
+        modifier = Modifier
+            .focusRing(interaction, ButtonDefaults.shape)
+            .semantics { contentDescription = "Audio track: $label. Double tap to switch." },
+    ) {
+        Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

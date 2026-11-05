@@ -30,6 +30,7 @@ class DetailsViewModel(
         when (intent) {
             DetailsIntent.Retry -> load(refresh = true)
             DetailsIntent.BackClicked -> sendEffect(DetailsEffect.NavigateBack)
+            is DetailsIntent.OpenItem -> sendEffect(DetailsEffect.OpenDetails(intent.id, intent.isMovie))
             DetailsIntent.ToggleFavorite -> state.value.details?.let { d ->
                 favorites.toggle(MediaItem(d.id, d.title, d.posterPath, d.isMovie))
             }
