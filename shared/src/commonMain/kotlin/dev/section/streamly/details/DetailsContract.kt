@@ -10,11 +10,13 @@ data class DetailsState(
     val details: MediaDetails? = null,
     val error: String? = null,
     val isOffline: Boolean = false,
+    val isFavorite: Boolean = false,
 ) : UiState
 
 sealed interface DetailsIntent : UiIntent {
     data object Retry : DetailsIntent
     data object BackClicked : DetailsIntent
+    data object ToggleFavorite : DetailsIntent
 }
 
 sealed interface DetailsEffect : UiEffect {

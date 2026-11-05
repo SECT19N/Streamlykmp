@@ -30,6 +30,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import dev.section.streamly.about.AboutScreen
+import dev.section.streamly.core.platform.rememberIsTv
 import dev.section.streamly.details.DetailsScreen
 import dev.section.streamly.favorites.FavoritesScreen
 import dev.section.streamly.home.HomeScreen
@@ -94,6 +95,10 @@ private fun NavIcon(destination: TopLevelDestination, selected: Boolean) {
     )
 }
 
+/** Reduced TV overscan insets: the full 5% guidance (48x27dp) wastes space on screens that do not crop. */
+private val TvOverscanHorizontal = 24.dp
+private val TvOverscanVertical = 14.dp
+
 /** Width from which the navigation rail replaces the bottom bar (TV, tablets). */
 private val RailMinWidth = 840.dp
 
@@ -109,7 +114,16 @@ fun AppNavigation() {
     val showNavigation = selected != null
 
     val widthDp = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }
-    val useRail = widthDp >= RailMinWidth
+    val isTv = rememberIsTv()
+    // A TV always gets the rail, even when its window is narrower than the tablet breakpoint.
+    val useRail = isTv || widthDp >= RailMinWidth
+    // TVs can crop the screen edges, so keep content inside the safe area (not for full-screen playback).
+    val onPlayer = destination?.hierarchy?.any { it.hasRoute(Route.Player::class) } == true
+    val overscan = if (isTv && !onPlayer) {
+        Modifier.padding(horizontal = TvOverscanHorizontal, vertical = TvOverscanVertical)
+    } else {
+        Modifier
+    }
 
     Scaffold(
         bottomBar = {
@@ -128,7 +142,7 @@ fun AppNavigation() {
             }
         },
     ) { padding ->
-        Row(Modifier.fillMaxSize().padding(padding)) {
+        Row(Modifier.fillMaxSize().padding(padding).then(overscan)) {
             if (showNavigation && useRail) {
                 NavigationRail(modifier = Modifier.focusRestorer().focusGroup()) {
                     topLevelDestinations.forEach { top ->
@@ -166,7 +180,13 @@ fun AppNavigation() {
                 composable<Route.LiveTv> {
                     LiveTvScreen(onOpenPlayer = { navController.navigate(Route.Player(it)) })
                 }
-                composable<Route.Favorites> { FavoritesScreen() }
+                composable<Route.Favorites> {
+                    FavoritesScreen(
+                        onOpenDetails = { id, isMovie ->
+                            navController.navigate(Route.Details(id, isMovie))
+                        },
+                    )
+                }
                 composable<Route.Details> { entry ->
                     val route = entry.toRoute<Route.Details>()
                     DetailsScreen(

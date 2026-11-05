@@ -311,6 +311,54 @@ class SearchViewModelTest {
         assertEquals(1, vm.state.value.page)
     }
 
+    private val show = MediaItem(2, "The Wire", null, false)
+
+    @Test
+    fun filterNarrowsLoadedResultsWithoutANewRequest() = runTest {
+        val repo = FakeRepository(Result.success(listOf(heat, show)))
+        val vm = SearchViewModel(repo, FakeConnectivity())
+        runCurrent()
+        vm.onIntent(SearchIntent.QueryChanged("w"))
+        advanceUntilIdle()
+        assertEquals(listOf(heat, show), vm.state.value.visibleResults)
+
+        vm.onIntent(SearchIntent.SetFilter(SearchFilter.Shows))
+        assertEquals(listOf(show), vm.state.value.visibleResults)
+        vm.onIntent(SearchIntent.SetFilter(SearchFilter.Movies))
+        assertEquals(listOf(heat), vm.state.value.visibleResults)
+        advanceUntilIdle()
+        assertEquals(1, repo.queries.size)
+    }
+
+    @Test
+    fun filterResetsOnANewQueryButNotWhenRetyping() = runTest {
+        val repo = FakeRepository(Result.success(listOf(heat, show)))
+        val vm = SearchViewModel(repo, FakeConnectivity())
+        runCurrent()
+        vm.onIntent(SearchIntent.QueryChanged("wire"))
+        advanceUntilIdle()
+        vm.onIntent(SearchIntent.SetFilter(SearchFilter.Shows))
+        vm.onIntent(SearchIntent.QueryChanged("wire ")) // same query after trimming
+        assertEquals(SearchFilter.Shows, vm.state.value.filter)
+        vm.onIntent(SearchIntent.QueryChanged("heat"))
+        assertEquals(SearchFilter.All, vm.state.value.filter)
+    }
+
+    @Test
+    fun filterThatHidesEverythingFetchesTheNextPage() = runTest {
+        val repo = FakeRepository(Result.success(listOf(heat)), totalPages = 3) // movies only
+        val vm = SearchViewModel(repo, FakeConnectivity())
+        runCurrent()
+        vm.onIntent(SearchIntent.QueryChanged("w"))
+        advanceUntilIdle()
+        vm.onIntent(SearchIntent.SetFilter(SearchFilter.Shows))
+        advanceUntilIdle()
+        // No shows on any page: it walks the remaining pages, then stops rather than looping.
+        assertEquals(listOf(1, 2, 3), repo.pages)
+        assertTrue(vm.state.value.visibleResults.isEmpty())
+        assertEquals(false, vm.state.value.canLoadMore)
+    }
+
     @Test
     fun reflectsConnectivity() = runTest {
         val connectivity = FakeConnectivity(initial = false)

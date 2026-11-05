@@ -99,7 +99,7 @@ private fun HomeContent(state: HomeState, onIntent: (HomeIntent) -> Unit) {
                         // Headroom so the focus ring isn't clipped at the row's edges.
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.focusRestorer { firstCard },
+                        modifier = Modifier.focusRestorer(firstCard),
                     ) {
                         itemsIndexed(row.items, key = { _, item -> item.id }) { index, item ->
                             PosterCard(

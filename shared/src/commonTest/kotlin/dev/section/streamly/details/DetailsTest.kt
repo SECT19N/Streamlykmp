@@ -6,6 +6,9 @@ import dev.section.streamly.details.data.DetailsRepository
 import dev.section.streamly.details.data.DetailsSource
 import dev.section.streamly.details.data.TmdbDetailsDto
 import dev.section.streamly.details.domain.MediaDetails
+import dev.section.streamly.favorites.data.FavoritesRepository
+import dev.section.streamly.home.domain.MediaItem
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -21,6 +24,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -176,6 +180,17 @@ class DetailsViewModelTest {
         }
     }
 
+    private class FakeFavorites : FavoritesRepository {
+        val flow = MutableStateFlow<List<MediaItem>>(emptyList())
+        override val favorites = flow
+        override fun isFavorite(id: Int, isMovie: Boolean) =
+            flow.map { list -> list.any { it.id == id && it.isMovie == isMovie } }
+
+        override fun toggle(item: MediaItem) {
+            flow.value = if (item in flow.value) flow.value - item else flow.value + item
+        }
+    }
+
     private class FakeConnectivity(initial: Boolean = true) : ConnectivityMonitor {
         val online = MutableStateFlow(initial)
         override val isOnline: Flow<Boolean> = online
@@ -190,7 +205,7 @@ class DetailsViewModelTest {
     @Test
     fun loadsDetailsForRouteArguments() = runTest {
         val repo = FakeRepository(Result.success(details))
-        val vm = DetailsViewModel(1, true, repo, FakeConnectivity())
+        val vm = DetailsViewModel(1, true, repo, FakeFavorites(), FakeConnectivity())
         assertTrue(vm.state.value.isLoading)
         advanceUntilIdle()
         assertEquals(details, vm.state.value.details)
@@ -201,7 +216,7 @@ class DetailsViewModelTest {
     @Test
     fun failureShowsErrorAndRetryRecovers() = runTest {
         val repo = FakeRepository(Result.failure(RuntimeException("x")))
-        val vm = DetailsViewModel(1, true, repo, FakeConnectivity())
+        val vm = DetailsViewModel(1, true, repo, FakeFavorites(), FakeConnectivity())
         advanceUntilIdle()
         assertNotNull(vm.state.value.error)
 
@@ -220,7 +235,7 @@ class DetailsViewModelTest {
     @Test
     fun reflectsConnectivity() = runTest {
         val connectivity = FakeConnectivity(initial = false)
-        val vm = DetailsViewModel(1, true, FakeRepository(Result.success(details)), connectivity)
+        val vm = DetailsViewModel(1, true, FakeRepository(Result.success(details)), FakeFavorites(), connectivity)
         advanceUntilIdle()
         assertTrue(vm.state.value.isOffline)
         connectivity.online.value = true
@@ -229,9 +244,39 @@ class DetailsViewModelTest {
     }
 
     @Test
+    fun favoriteStateFollowsRepositoryAndToggles() = runTest {
+        val favorites = FakeFavorites()
+        val vm = DetailsViewModel(1, true, FakeRepository(Result.success(details)), favorites, FakeConnectivity())
+        advanceUntilIdle()
+        assertFalse(vm.state.value.isFavorite)
+
+        vm.onIntent(DetailsIntent.ToggleFavorite)
+        advanceUntilIdle()
+        assertTrue(vm.state.value.isFavorite)
+        // What gets stored is enough to render the Favorites list offline.
+        assertEquals(MediaItem(1, "Heat", null, true), favorites.flow.value.single())
+
+        vm.onIntent(DetailsIntent.ToggleFavorite)
+        advanceUntilIdle()
+        assertFalse(vm.state.value.isFavorite)
+    }
+
+    @Test
+    fun toggleBeforeDetailsLoadedDoesNothing() = runTest {
+        val favorites = FakeFavorites()
+        val vm = DetailsViewModel(
+            1, true, FakeRepository(Result.failure(RuntimeException("x"))), favorites, FakeConnectivity(),
+        )
+        advanceUntilIdle()
+        vm.onIntent(DetailsIntent.ToggleFavorite)
+        advanceUntilIdle()
+        assertTrue(favorites.flow.value.isEmpty())
+    }
+
+    @Test
     fun backEmitsNavigateBack() = runTest {
         val vm =
-            DetailsViewModel(1, true, FakeRepository(Result.success(details)), FakeConnectivity())
+            DetailsViewModel(1, true, FakeRepository(Result.success(details)), FakeFavorites(), FakeConnectivity())
         vm.onIntent(DetailsIntent.BackClicked)
         advanceUntilIdle()
         assertEquals(DetailsEffect.NavigateBack, vm.effects.first())

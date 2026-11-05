@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -17,6 +18,8 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -78,10 +81,16 @@ private fun SearchContent(state: SearchState, onIntent: (SearchIntent) -> Unit) 
             onQueryChange = { onIntent(SearchIntent.QueryChanged(it)) },
             modifier = Modifier.fillMaxWidth().padding(16.dp),
         )
+        if (state.hasSearched && state.error == null) {
+            FilterRow(state.filter) { onIntent(SearchIntent.SetFilter(it)) }
+        }
+        val visible = state.visibleResults
         when {
             state.error != null -> ErrorView(
                 state.error,
                 onRetry = { onIntent(SearchIntent.Retry) },
+                // The user is typing; moving focus to Retry would cut the on-screen keyboard off.
+                takeFocus = false,
             )
 
             state.isLoading -> LoadingView()
@@ -89,7 +98,12 @@ private fun SearchContent(state: SearchState, onIntent: (SearchIntent) -> Unit) 
             state.hasSearched && state.results.isEmpty() ->
                 EmptyView("No results for \"${state.query.trim()}\".")
 
-            state.results.isEmpty() -> Unit // typing; the debounce hasn't fired yet
+            // The filter hides everything loaded so far; the next page is already on its way.
+            visible.isEmpty() && state.canLoadMore -> LoadingView()
+            visible.isEmpty() && state.results.isNotEmpty() ->
+                EmptyView("No ${state.filter.label.lowercase()} for \"${state.query.trim()}\".")
+
+            visible.isEmpty() -> Unit // typing; the debounce hasn't fired yet
             else -> {
                 val gridState = rememberLazyGridState()
                 val nearEnd by remember(gridState) {
@@ -99,7 +113,7 @@ private fun SearchContent(state: SearchState, onIntent: (SearchIntent) -> Unit) 
                         info.totalItemsCount > 0 && last >= info.totalItemsCount - LoadMoreThreshold
                     }
                 }
-                LaunchedEffect(nearEnd, state.results.size) {
+                LaunchedEffect(nearEnd, visible.size) {
                     if (nearEnd) onIntent(SearchIntent.LoadMore)
                 }
                 LazyVerticalGrid(
@@ -110,13 +124,32 @@ private fun SearchContent(state: SearchState, onIntent: (SearchIntent) -> Unit) 
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.fillMaxSize().focusRestorer(),
                 ) {
-                    items(state.results, key = { "${it.isMovie}-${it.id}" }) { item ->
+                    items(visible, key = { "${it.isMovie}-${it.id}" }) { item ->
                         PosterCard(item, onClick = {
                             onIntent(SearchIntent.ItemClicked(item.id, item.isMovie))
                         })
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun FilterRow(selected: SearchFilter, onSelect: (SearchFilter) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        SearchFilter.entries.forEach { filter ->
+            val interaction = remember { MutableInteractionSource() }
+            FilterChip(
+                selected = filter == selected,
+                onClick = { onSelect(filter) },
+                label = { Text(filter.label) },
+                interactionSource = interaction,
+                modifier = Modifier.focusRing(interaction, FilterChipDefaults.shape),
+            )
         }
     }
 }

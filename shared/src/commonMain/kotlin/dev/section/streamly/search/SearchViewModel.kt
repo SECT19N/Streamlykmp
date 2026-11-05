@@ -45,8 +45,16 @@ class SearchViewModel(
     override fun handleIntent(intent: SearchIntent) {
         when (intent) {
             is SearchIntent.QueryChanged -> {
-                setState { copy(query = intent.query) }
-                activeQuery.value = intent.query.trim()
+                val trimmed = intent.query.trim()
+                // A different query is a new search, so the previous filter no longer applies.
+                val changed = trimmed != activeQuery.value
+                setState { copy(query = intent.query, filter = if (changed) SearchFilter.All else filter) }
+                activeQuery.value = trimmed
+            }
+
+            is SearchIntent.SetFilter -> {
+                setState { copy(filter = intent.filter) }
+                loadMoreIfFilterHidesEverything()
             }
 
             SearchIntent.Retry -> retryTick.value++
@@ -54,6 +62,15 @@ class SearchViewModel(
             is SearchIntent.ItemClicked ->
                 sendEffect(SearchEffect.OpenDetails(intent.id, intent.isMovie))
         }
+    }
+
+    /**
+     * The filter works on loaded results, so if it hides all of them but more pages exist, fetch
+     * on instead of showing a misleading "no results". Pages are finite, so this ends.
+     */
+    private fun loadMoreIfFilterHidesEverything() {
+        val s = state.value
+        if (s.hasSearched && s.visibleResults.isEmpty() && s.canLoadMore) loadMore()
     }
 
     private fun loadMore() {
@@ -72,6 +89,7 @@ class SearchViewModel(
                             isLoadingMore = false,
                         )
                     }
+                    loadMoreIfFilterHidesEverything()
                 }
                 // A failed page keeps the results on screen; scrolling to the end again retries.
                 .onFailure { setState { copy(isLoadingMore = false) } }
@@ -106,6 +124,7 @@ class SearchViewModel(
                         canLoadMore = first.canLoadMore,
                     )
                 }
+                loadMoreIfFilterHidesEverything()
             }
             .onFailure {
                 setState {

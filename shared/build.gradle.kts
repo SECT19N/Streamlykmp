@@ -91,6 +91,7 @@ kotlin {
             implementation(libs.koin.composeViewmodel)
             implementation(libs.coil.compose)
             implementation(libs.coil.networkKtor)
+            implementation(libs.multiplatform.settings)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -98,6 +99,10 @@ kotlin {
         }
         getByName("androidDeviceTest").dependencies {
             implementation(libs.androidx.testRunner)
+            implementation(libs.androidx.testExt.junit)
+            implementation(libs.junit)
+            implementation(libs.compose.uiTest)
+            implementation(libs.compose.uiTestManifest)
         }
     }
 }

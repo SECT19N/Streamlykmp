@@ -2,8 +2,10 @@
 
 package dev.section.streamly.details
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,12 +25,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -37,6 +41,12 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -46,6 +56,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.SubcomposeAsyncImage
+import kotlinx.coroutines.launch
 import dev.section.streamly.details.domain.CastMember
 import dev.section.streamly.details.domain.MediaDetails
 import dev.section.streamly.ui.components.ErrorView
@@ -57,6 +68,8 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import streamlykmp.shared.generated.resources.Res
 import streamlykmp.shared.generated.resources.ic_arrow_back
+import streamlykmp.shared.generated.resources.ic_favorite
+import streamlykmp.shared.generated.resources.ic_favorite_filled
 
 @Composable
 fun DetailsScreen(
@@ -108,6 +121,14 @@ private fun DetailsContent(state: DetailsState, onIntent: (DetailsIntent) -> Uni
                     .padding(8.dp)
                     .focusRequester(backFocus),
             )
+            // Saving needs the title and poster, so the heart waits for the details.
+            if (state.details != null) {
+                FavoriteButton(
+                    isFavorite = state.isFavorite,
+                    onToggle = { onIntent(DetailsIntent.ToggleFavorite) },
+                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
+                )
+            }
         }
     }
 }
@@ -132,8 +153,31 @@ private fun BackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 @Composable
+private fun FavoriteButton(isFavorite: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+    val interaction = remember { MutableInteractionSource() }
+    IconToggleButton(
+        checked = isFavorite,
+        onCheckedChange = { onToggle() },
+        interactionSource = interaction,
+        modifier = modifier
+            .size(48.dp)
+            .background(Color.Black.copy(alpha = 0.45f), CircleShape)
+            .focusRing(interaction, CircleShape),
+    ) {
+        Icon(
+            painter = painterResource(
+                if (isFavorite) Res.drawable.ic_favorite_filled else Res.drawable.ic_favorite,
+            ),
+            contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
+            tint = Color.White,
+        )
+    }
+}
+
+@Composable
 private fun DetailsBody(details: MediaDetails) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+    val scrollState = rememberScrollState()
+    Column(Modifier.fillMaxSize().verticalScroll(scrollState)) {
         Backdrop(details)
         Column(
             Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -171,7 +215,7 @@ private fun DetailsBody(details: MediaDetails) {
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
-            Overview(details.overview)
+            Overview(details.overview, scrollState)
             if (details.cast.isNotEmpty()) {
                 Text(
                     "Cast",
@@ -195,19 +239,42 @@ private fun DetailsBody(details: MediaDetails) {
 
 /** Focusable so a D-pad can land on it and scroll the page. */
 @Composable
-private fun Overview(overview: String?) {
+private fun Overview(overview: String?, scrollState: ScrollState) {
     val interaction = remember { MutableInteractionSource() }
     val shape = RoundedCornerShape(8.dp)
+    val scope = rememberCoroutineScope()
+    val stepPx = with(LocalDensity.current) { DpadScrollStep.toPx() }
     Text(
         overview ?: "No overview available.",
         style = MaterialTheme.typography.bodyLarge,
         modifier = Modifier
             .fillMaxWidth()
             .focusRing(interaction, shape)
+            // A D-pad can't drag the page, so while there is more page in that direction, Up and
+            // Down scroll it; at the end they fall through and move focus as usual.
+            .onPreviewKeyEvent { event ->
+                if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                when {
+                    event.key == Key.DirectionDown && scrollState.canScrollForward -> {
+                        scope.launch { scrollState.animateScrollBy(stepPx) }
+                        true
+                    }
+
+                    event.key == Key.DirectionUp && scrollState.canScrollBackward -> {
+                        scope.launch { scrollState.animateScrollBy(-stepPx) }
+                        true
+                    }
+
+                    else -> false
+                }
+            }
             .focusable(interactionSource = interaction)
             .padding(4.dp),
     )
 }
+
+/** How far one D-pad press scrolls the Details page. */
+private val DpadScrollStep = 200.dp
 
 @Composable
 private fun Backdrop(details: MediaDetails) {
@@ -268,20 +335,21 @@ private fun CastCard(member: CastMember) {
             member.name,
             style = MaterialTheme.typography.labelLarge,
             textAlign = TextAlign.Center,
+            minLines = 2, // fixed height, so the cast row doesn't resize while scrolling
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(top = 6.dp),
         )
-        member.character?.let {
-            Text(
-                it,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+        // Always present, even when empty, so every cast card is the same height.
+        Text(
+            member.character.orEmpty(),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            minLines = 2,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

@@ -6,6 +6,11 @@ import dev.section.streamly.details.data.DefaultDetailsRepository
 import dev.section.streamly.details.data.DetailsRepository
 import dev.section.streamly.details.data.DetailsSource
 import dev.section.streamly.details.data.TmdbDetailsSource
+import dev.section.streamly.favorites.FavoritesViewModel
+import dev.section.streamly.favorites.data.DefaultFavoritesRepository
+import dev.section.streamly.favorites.data.FavoritesRepository
+import dev.section.streamly.favorites.data.FavoritesStore
+import dev.section.streamly.favorites.data.SettingsFavoritesStore
 import dev.section.streamly.home.HomeViewModel
 import dev.section.streamly.home.data.DefaultHomeRepository
 import dev.section.streamly.home.data.HomeRepository
@@ -44,7 +49,12 @@ val appModule: Module = module {
     // Details (TMDB): the id and type come from the navigation route.
     single<DetailsSource> { TmdbDetailsSource(get()) }
     single<DetailsRepository> { DefaultDetailsRepository(get()) }
-    viewModel { (id: Int, isMovie: Boolean) -> DetailsViewModel(id, isMovie, get(), get()) }
+    viewModel { (id: Int, isMovie: Boolean) -> DetailsViewModel(id, isMovie, get(), get(), get()) }
+
+    // Favorites (device-local; the Settings binding comes from the platform module)
+    single<FavoritesStore> { SettingsFavoritesStore(get()) }
+    single<FavoritesRepository> { DefaultFavoritesRepository(get(), get()) }
+    viewModel { FavoritesViewModel(get()) }
 
     // Search (TMDB)
     single<SearchSource> { TmdbSearchSource(get()) }

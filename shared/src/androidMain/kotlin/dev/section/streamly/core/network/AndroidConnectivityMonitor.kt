@@ -8,6 +8,8 @@ import android.net.NetworkRequest
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import com.russhwolf.settings.Settings
+import com.russhwolf.settings.SharedPreferencesSettings
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -57,6 +59,11 @@ class AndroidConnectivityMonitor(context: Context) : ConnectivityMonitor {
 actual fun rememberPlatformModule(): Module {
     val context = LocalContext.current.applicationContext
     return remember(context) {
-        module { single<ConnectivityMonitor> { AndroidConnectivityMonitor(context) } }
+        module {
+            single<ConnectivityMonitor> { AndroidConnectivityMonitor(context) }
+            single<Settings> {
+                SharedPreferencesSettings(context.getSharedPreferences("streamly", Context.MODE_PRIVATE))
+            }
+        }
     }
 }

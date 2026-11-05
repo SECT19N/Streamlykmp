@@ -41,10 +41,19 @@ fun LoadingView(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun ErrorView(message: String, onRetry: () -> Unit, modifier: Modifier = Modifier) {
+fun ErrorView(
+    message: String,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+    /**
+     * Hands focus to Retry when the error appears. Turn off where something else (a search field
+     * being typed into) already owns focus, or the keyboard loses its input.
+     */
+    takeFocus: Boolean = true,
+) {
     val retryFocus = remember { FocusRequester() }
     // D-pad users have nothing else to land on here, so hand them the Retry button.
-    LaunchedEffect(Unit) { runCatching { retryFocus.requestFocus() } }
+    LaunchedEffect(Unit) { if (takeFocus) runCatching { retryFocus.requestFocus() } }
     Column(
         modifier.fillMaxSize().padding(24.dp).semantics { liveRegion = LiveRegionMode.Assertive },
         verticalArrangement = Arrangement.Center,
