@@ -49,10 +49,9 @@ fun PosterCard(item: MediaItem, onClick: () -> Unit, modifier: Modifier = Modifi
         Text(
             item.title,
             style = MaterialTheme.typography.bodyMedium,
-            // Always reserve two lines. Otherwise a row is as tall as its tallest visible card, so
-            // scrolling a long title into view makes the whole screen jump down and back up.
-            minLines = 2,
-            maxLines = 2,
+            // Always exactly one line (ellipsised). A row is as tall as its tallest visible card, so
+            // a wrapping title would make the whole screen jump down and back up while scrolling.
+            maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(top = 6.dp, bottom = 4.dp),
         )

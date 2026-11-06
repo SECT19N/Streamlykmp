@@ -67,7 +67,7 @@ private fun HomeContent(state: HomeState, onIntent: (HomeIntent) -> Unit) {
             state.rows.isEmpty() -> EmptyView("No movies or shows available.")
             else -> LazyColumn(
                 contentPadding = PaddingValues(vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(state.rows, key = { it.type }) { row ->
                     Text(
