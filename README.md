@@ -22,7 +22,9 @@ See [ROADMAP.md](./ROADMAP.md) for planned work and progress.
 - **Home:** trending and popular movies and shows from TMDB, with loading, error and offline states.
 - **Live TV:** channel list and full-screen HLS playback (see the limitations below).
 - **About:** app description, TMDB logo and attribution.
-- Favorites is still a placeholder; see the roadmap.
+- Favorites are saved on the device only (SharedPreferences on Android, UserDefaults on iOS), as the
+  title and poster path, so the list still shows offline. They are lost on uninstall; there is no
+  sync.
 - Home rows and search results load more pages as you near the end. Results are cached in memory for
   5 minutes; Retry always refetches, and if a refresh fails the last good result is shown instead.
   Nothing is persisted across app restarts.
