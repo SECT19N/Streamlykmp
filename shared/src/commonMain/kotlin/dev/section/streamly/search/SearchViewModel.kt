@@ -6,6 +6,7 @@ import dev.section.streamly.core.network.ConnectivityMonitor
 import dev.section.streamly.search.data.SearchRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
@@ -24,6 +25,7 @@ class SearchViewModel(
     /** Trimmed query that drives the search; Retry re-emits it via [retryTick]. */
     private val activeQuery = MutableStateFlow("")
     private val retryTick = MutableStateFlow(0)
+    private var loadMoreJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -36,45 +38,105 @@ class SearchViewModel(
                 .collectLatest { query -> runSearch(query) }
         }
         viewModelScope.launch {
-            retryTick.drop(1).collectLatest { runSearch(activeQuery.value) }
+            retryTick.drop(1).collectLatest { runSearch(activeQuery.value, refresh = true) }
         }
     }
 
     override fun handleIntent(intent: SearchIntent) {
         when (intent) {
             is SearchIntent.QueryChanged -> {
-                setState { copy(query = intent.query) }
-                activeQuery.value = intent.query.trim()
+                val trimmed = intent.query.trim()
+                // A different query is a new search, so the previous filter no longer applies.
+                val changed = trimmed != activeQuery.value
+                setState {
+                    copy(
+                        query = intent.query,
+                        filter = if (changed) SearchFilter.All else filter
+                    )
+                }
+                activeQuery.value = trimmed
+            }
+
+            is SearchIntent.SetFilter -> {
+                setState { copy(filter = intent.filter) }
+                loadMoreIfFilterHidesEverything()
             }
 
             SearchIntent.Retry -> retryTick.value++
+            SearchIntent.LoadMore -> loadMore()
             is SearchIntent.ItemClicked ->
                 sendEffect(SearchEffect.OpenDetails(intent.id, intent.isMovie))
         }
     }
 
-    private suspend fun runSearch(query: String) {
+    /**
+     * The filter works on loaded results, so if it hides all of them but more pages exist, fetch
+     * on instead of showing a misleading "no results". Pages are finite, so this ends.
+     */
+    private fun loadMoreIfFilterHidesEverything() {
+        val s = state.value
+        if (s.hasSearched && s.visibleResults.isEmpty() && s.canLoadMore) loadMore()
+    }
+
+    private fun loadMore() {
+        val current = state.value
+        if (!current.canLoadMore || current.isLoadingMore || current.isLoading) return
+        val query = activeQuery.value
+        setState { copy(isLoadingMore = true) }
+        loadMoreJob = viewModelScope.launch {
+            repository.search(query, current.page + 1)
+                .onSuccess { next ->
+                    setState {
+                        copy(
+                            results = (results + next.items).distinctBy { it.isMovie to it.id },
+                            page = next.page,
+                            canLoadMore = next.canLoadMore,
+                            isLoadingMore = false,
+                        )
+                    }
+                    loadMoreIfFilterHidesEverything()
+                }
+                // A failed page keeps the results on screen; scrolling to the end again retries.
+                .onFailure { setState { copy(isLoadingMore = false) } }
+        }
+    }
+
+    private suspend fun runSearch(query: String, refresh: Boolean = false) {
+        loadMoreJob?.cancel() // a page for the previous query must not land in these results
         if (query.isBlank()) {
             setState {
                 copy(
                     isLoading = false,
                     results = emptyList(),
                     error = null,
-                    hasSearched = false
+                    hasSearched = false,
+                    page = 1,
+                    canLoadMore = false,
+                    isLoadingMore = false,
                 )
             }
             return
         }
-        setState { copy(isLoading = true, error = null) }
-        repository.search(query)
-            .onSuccess { items ->
-                setState { copy(isLoading = false, results = items, hasSearched = true) }
+        setState { copy(isLoading = true, error = null, isLoadingMore = false) }
+        repository.search(query, page = 1, refresh = refresh)
+            .onSuccess { first ->
+                setState {
+                    copy(
+                        isLoading = false,
+                        results = first.items,
+                        hasSearched = true,
+                        page = first.page,
+                        canLoadMore = first.canLoadMore,
+                    )
+                }
+                loadMoreIfFilterHidesEverything()
             }
             .onFailure {
                 setState {
                     copy(
                         isLoading = false,
                         results = emptyList(),
+                        canLoadMore = false,
                         error = "The search couldn't be completed.",
                     )
                 }

@@ -1,6 +1,7 @@
+@file:OptIn(ExperimentalComposeUiApi::class)
+
 package dev.section.streamly.livetv
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,13 +16,16 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,6 +34,7 @@ import dev.section.streamly.ui.components.EmptyView
 import dev.section.streamly.ui.components.ErrorView
 import dev.section.streamly.ui.components.LoadingView
 import dev.section.streamly.ui.components.OfflineBanner
+import dev.section.streamly.ui.components.clickableCard
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -116,7 +121,7 @@ private fun ChannelGrid(
         contentPadding = PaddingValues(16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().focusRestorer(),
     ) {
         items(channels, key = { it.id }) { channel ->
             ChannelCard(channel, onClick = { onClick(channel) })
@@ -126,7 +131,16 @@ private fun ChannelGrid(
 
 @Composable
 private fun ChannelCard(channel: Channel, onClick: () -> Unit) {
-    Card(Modifier.fillMaxWidth().clickable(onClick = onClick)) {
+    val shape = CardDefaults.shape
+    Card(
+        Modifier
+            .fillMaxWidth()
+            .clickableCard(
+                onClick = onClick,
+                shape = shape,
+                onClickLabel = "Watch ${channel.name}"
+            ),
+    ) {
         Column(Modifier.padding(12.dp)) {
             ChannelLogo(channel, Modifier.fillMaxWidth().aspectRatio(16f / 9f))
             Text(
@@ -138,7 +152,7 @@ private fun ChannelCard(channel: Channel, onClick: () -> Unit) {
             )
             Text(
                 channel.category,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }

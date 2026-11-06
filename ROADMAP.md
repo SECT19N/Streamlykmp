@@ -51,18 +51,30 @@ local favorites plus the image cache.
 
 ## 6 Nov: Polish
 
-- [ ] Android TV focus and navigation on every screen
-- [ ] Accessibility (content descriptions, readable text)
-- [ ] Bonus, in order: pagination, session cache, favorites, search filters
-- [ ] Smoke test on an API 23 phone emulator
+- [x] Android TV focus and navigation on every screen (implemented: theme-coloured focus ring,
+  initial
+  dd focus, focus restoration, TV rail, overscan padding, larger TV text; still needs a D-pad pass
+  on a
+  TV emulator)
+- [x] Accessibility (implemented: merged card semantics, headings, live regions; still needs a
+  TalkBack pass)
+- [x] Bonus: pagination (Home rows and Search)
+- [x] Bonus: session cache (5 min, stale fallback when a refresh fails)
+- [x] Bonus: favorites (device-local, heart on Details, Favorites tab)
+- [x] Bonus: search filters (All / Movies / Shows)
+- [x] Smoke test on an API 23 phone emulator
 
 ## 7 Nov: Ship (buffer day, no new features)
 
 - [ ] Debug/signed APKs for mobile and TV
 - [ ] README final pass and documented assumptions
 
-## Optional / later
+## Extras (after Day 6)
 
-- [ ] Audio track picker in the player. Only ch_07 and ch_14 have a second audio feed (both
-  labelled "eng", the first is the default); no channel has subtitles or captions. Media3 exposes
-  the tracks via `Player.currentTracks`, so this would be a small menu on the player controls.
+- [x] Favorites split into Movies / TV Shows (segmented buttons)
+- [x] Details: content rating (US first, else any country) and a facts section (status, language,
+  seasons/episodes, budget/revenue)
+- [x] Details: "Part of <collection>" row for movies in a franchise (a failed collection request
+  doesn't fail the page)
+- [x] Audio track switch in the player (shown only when a stream has more than one feed; only ch_07
+  and ch_14 do, both labelled "eng", so they appear as "English 1/2"). Needs a check on a device.

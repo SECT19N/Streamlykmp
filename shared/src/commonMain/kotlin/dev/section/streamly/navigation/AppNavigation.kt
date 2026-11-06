@@ -1,5 +1,8 @@
+@file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+
 package dev.section.streamly.navigation
 
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -13,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
@@ -26,6 +30,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import dev.section.streamly.about.AboutScreen
+import dev.section.streamly.core.platform.rememberIsTv
 import dev.section.streamly.details.DetailsScreen
 import dev.section.streamly.favorites.FavoritesScreen
 import dev.section.streamly.home.HomeScreen
@@ -90,6 +95,10 @@ private fun NavIcon(destination: TopLevelDestination, selected: Boolean) {
     )
 }
 
+/** Reduced TV overscan insets: the full 5% guidance (48x27dp) wastes space on screens that do not crop. */
+private val TvOverscanHorizontal = 24.dp
+private val TvOverscanVertical = 14.dp
+
 /** Width from which the navigation rail replaces the bottom bar (TV, tablets). */
 private val RailMinWidth = 840.dp
 
@@ -105,7 +114,16 @@ fun AppNavigation() {
     val showNavigation = selected != null
 
     val widthDp = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }
-    val useRail = widthDp >= RailMinWidth
+    val isTv = rememberIsTv()
+    // A TV always gets the rail, even when its window is narrower than the tablet breakpoint.
+    val useRail = isTv || widthDp >= RailMinWidth
+    // TVs can crop the screen edges, so keep content inside the safe area (not for full-screen playback).
+    val onPlayer = destination?.hierarchy?.any { it.hasRoute(Route.Player::class) } == true
+    val overscan = if (isTv && !onPlayer) {
+        Modifier.padding(horizontal = TvOverscanHorizontal, vertical = TvOverscanVertical)
+    } else {
+        Modifier
+    }
 
     Scaffold(
         bottomBar = {
@@ -124,9 +142,9 @@ fun AppNavigation() {
             }
         },
     ) { padding ->
-        Row(Modifier.fillMaxSize().padding(padding)) {
+        Row(Modifier.fillMaxSize().padding(padding).then(overscan)) {
             if (showNavigation && useRail) {
-                NavigationRail {
+                NavigationRail(modifier = Modifier.focusRestorer().focusGroup()) {
                     topLevelDestinations.forEach { top ->
                         NavigationRailItem(
                             selected = top == selected,
@@ -141,7 +159,8 @@ fun AppNavigation() {
             NavHost(
                 navController = navController,
                 startDestination = Route.Home,
-                modifier = Modifier.weight(1f),
+                // A group keeps D-pad traversal inside the screen until the user moves out of it.
+                modifier = Modifier.weight(1f).focusGroup(),
             ) {
                 composable<Route.Home> {
                     HomeScreen(
@@ -161,13 +180,22 @@ fun AppNavigation() {
                 composable<Route.LiveTv> {
                     LiveTvScreen(onOpenPlayer = { navController.navigate(Route.Player(it)) })
                 }
-                composable<Route.Favorites> { FavoritesScreen() }
+                composable<Route.Favorites> {
+                    FavoritesScreen(
+                        onOpenDetails = { id, isMovie ->
+                            navController.navigate(Route.Details(id, isMovie))
+                        },
+                    )
+                }
                 composable<Route.Details> { entry ->
                     val route = entry.toRoute<Route.Details>()
                     DetailsScreen(
                         id = route.id,
                         isMovie = route.isMovie,
                         onBack = { navController.popBackStack() },
+                        onOpenDetails = { id, isMovie ->
+                            navController.navigate(Route.Details(id, isMovie))
+                        },
                     )
                 }
                 composable<Route.Player> { entry ->

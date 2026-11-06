@@ -4,11 +4,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,6 +48,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.section.streamly.ui.components.OfflineBanner
+import dev.section.streamly.ui.components.focusRing
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -116,6 +116,8 @@ private fun PlayerContent(state: PlayerState, onIntent: (PlayerIntent) -> Unit) 
                 streamUrl = channel.streamUrl,
                 playWhenReady = state.playWhenReady,
                 retryToken = state.retryToken,
+                requestedAudioId = state.requestedAudioId,
+                onAudioTracks = { onIntent(PlayerIntent.AudioTracksChanged(it)) },
                 onStatus = { onIntent(PlayerIntent.PlayerStatusChanged(it)) },
                 modifier = Modifier.fillMaxSize(),
             )
@@ -233,6 +235,9 @@ private fun ControlsOverlay(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
+            if (showCenterControls && state.canSwitchAudio) {
+                AudioButton(state.currentAudio, onClick = { onIntent(PlayerIntent.CycleAudio) })
+            }
             if (showCenterControls) LiveBadge()
         }
 
@@ -277,17 +282,12 @@ private fun ControlButton(
     size: androidx.compose.ui.unit.Dp = 56.dp,
 ) {
     val interaction = remember { MutableInteractionSource() }
-    val focused by interaction.collectIsFocusedAsState()
     IconButton(
         onClick = onClick,
         interactionSource = interaction,
         modifier = modifier
             .size(size)
-            .border(
-                width = if (focused) 3.dp else 0.dp,
-                color = if (focused) Color.White else Color.Transparent,
-                shape = CircleShape,
-            ),
+            .focusRing(interaction, CircleShape),
     ) {
         Icon(
             painter = painterResource(icon),
@@ -298,9 +298,33 @@ private fun ControlButton(
     }
 }
 
+/** Cycles through the stream's audio feeds; with two feeds that is a plain toggle. */
+@Composable
+private fun AudioButton(current: AudioTrack?, onClick: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val label = current?.label ?: "Audio"
+    Button(
+        onClick = onClick,
+        interactionSource = interaction,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Black.copy(alpha = 0.55f),
+            contentColor = Color.White,
+        ),
+        modifier = Modifier
+            .focusRing(interaction, ButtonDefaults.shape)
+            .semantics { contentDescription = "Audio track: $label. Double tap to switch." },
+    ) {
+        Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
 @Composable
 private fun LiveBadge() {
-    Surface(color = Color(0xFFD32F2F), shape = CircleShape) {
+    Surface(
+        color = Color(0xFFD32F2F),
+        shape = CircleShape,
+        modifier = Modifier.semantics { contentDescription = "Live broadcast" },
+    ) {
         Text(
             "LIVE",
             color = Color.White,
@@ -336,7 +360,14 @@ private fun ErrorPanel(
             textAlign = TextAlign.Center,
         )
         if (kind != PlayerErrorKind.NotFound) {
-            Button(onClick = onRetry, modifier = Modifier.focusRequester(retryFocus)) {
+            val interaction = remember { MutableInteractionSource() }
+            Button(
+                onClick = onRetry,
+                interactionSource = interaction,
+                modifier = Modifier
+                    .focusRequester(retryFocus)
+                    .focusRing(interaction, ButtonDefaults.shape),
+            ) {
                 Text("Retry")
             }
         }

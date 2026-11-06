@@ -19,15 +19,19 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.TrackSelectionOverride
+import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.ui.PlayerView
 import dev.section.streamly.player.audio.StreamlyRenderersFactory
+import java.util.Locale
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -35,11 +39,14 @@ actual fun LivePlayerSurface(
     streamUrl: String,
     playWhenReady: Boolean,
     retryToken: Int,
+    requestedAudioId: String?,
+    onAudioTracks: (List<AudioTrack>) -> Unit,
     onStatus: (PlaybackStatus) -> Unit,
     modifier: Modifier,
 ) {
     val context = LocalContext.current
     val latestOnStatus by rememberUpdatedState(onStatus)
+    val latestOnAudioTracks by rememberUpdatedState(onAudioTracks)
     val latestPlayWhenReady by rememberUpdatedState(playWhenReady)
     val player = remember { ExoPlayer.Builder(context, StreamlyRenderersFactory(context)).build() }
 
@@ -52,6 +59,10 @@ actual fun LivePlayerSurface(
                     // IDLE follows an error (already reported); ENDED doesn't happen on live.
                     else -> Unit
                 }
+            }
+
+            override fun onTracksChanged(tracks: Tracks) {
+                latestOnAudioTracks(tracks.audioTracks())
             }
 
             override fun onPlayerError(error: PlaybackException) {
@@ -82,6 +93,22 @@ actual fun LivePlayerSurface(
         player.prepare()
     }
 
+    // Apply the user's pick. The player then reports the new selection through onTracksChanged.
+    LaunchedEffect(player, requestedAudioId) {
+        val id = requestedAudioId
+        if (id == null) {
+            // New channel or no choice: drop any override left from a previous stream.
+            player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
+                .clearOverridesOfType(C.TRACK_TYPE_AUDIO)
+                .build()
+            return@LaunchedEffect
+        }
+        val (group, index) = player.currentTracks.findAudio(id) ?: return@LaunchedEffect
+        player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
+            .setOverrideForType(TrackSelectionOverride(group.mediaTrackGroup, index))
+            .build()
+    }
+
     SideEffect {
         if (player.playWhenReady != playWhenReady) player.playWhenReady = playWhenReady
     }
@@ -105,6 +132,32 @@ actual fun LivePlayerSurface(
             }
         },
     )
+}
+
+/** Audio feeds the device can play. The id is "groupIndex:trackIndex" within [Tracks.getGroups]. */
+internal fun Tracks.audioTracks(): List<AudioTrack> {
+    val found = mutableListOf<Triple<String, String?, Boolean>>()
+    groups.forEachIndexed { g, group ->
+        if (group.type != C.TRACK_TYPE_AUDIO) return@forEachIndexed
+        for (t in 0 until group.length) {
+            if (!group.isTrackSupported(t)) continue
+            val format = group.getTrackFormat(t)
+            val language = format.language?.takeIf { it.isNotBlank() && it != "und" }
+                ?.let { Locale.forLanguageTag(it).getDisplayLanguage(Locale.ENGLISH) }
+            found += Triple("$g:$t", format.label ?: language, group.isTrackSelected(t))
+        }
+    }
+    val labels = uniqueAudioLabels(found.map { it.second })
+    return found.mapIndexed { i, (id, _, selected) -> AudioTrack(id, labels[i], selected) }
+}
+
+private fun Tracks.findAudio(id: String): Pair<Tracks.Group, Int>? {
+    val (g, t) = id.split(":").map { it.toIntOrNull() ?: return null }.takeIf { it.size == 2 }
+        ?: return null
+    val group =
+        groups.getOrNull(g)?.takeIf { it.type == C.TRACK_TYPE_AUDIO && t in 0 until it.length }
+            ?: return null
+    return group to t
 }
 
 /** Maps a Media3 error code to a coarse, user-presentable kind. */
