@@ -51,13 +51,10 @@ local favorites plus the image cache.
 
 ## 6 Nov: Polish
 
-- [x] Android TV focus and navigation on every screen (implemented: theme-coloured focus ring,
-  initial
-  dd focus, focus restoration, TV rail, overscan padding, larger TV text; still needs a D-pad pass
-  on a
-  TV emulator)
-- [x] Accessibility (implemented: merged card semantics, headings, live regions; still needs a
-  TalkBack pass)
+- [x] Android TV focus and navigation on every screen (theme-coloured focus ring, initial focus,
+  focus restoration, TV rail, overscan padding, larger TV text; D-pad tested on a TV emulator)
+- [x] Accessibility (merged card semantics, headings, live regions; not tested with TalkBack,
+  out of scope)
 - [x] Bonus: pagination (Home rows and Search)
 - [x] Bonus: session cache (5 min, stale fallback when a refresh fails)
 - [x] Bonus: favorites (device-local, heart on Details, Favorites tab)
@@ -66,8 +63,8 @@ local favorites plus the image cache.
 
 ## 7 Nov: Ship (buffer day, no new features)
 
-- [ ] Debug/signed APKs for mobile and TV
-- [ ] README final pass and documented assumptions
+- [x] Debug/signed APKs for mobile and TV
+- [x] README final pass and documented assumptions
 
 ## Extras (after Day 6)
 

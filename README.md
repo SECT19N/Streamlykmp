@@ -20,44 +20,61 @@ See [ROADMAP.md](./ROADMAP.md) for planned work and progress.
 ## Features
 
 - **Home:** trending and popular movies and shows from TMDB, with loading, error and offline states.
-- **Live TV:** channel list and full-screen HLS playback (see the limitations below).
+  Rows load more pages as you near the end.
+- **Live TV:** channel list and full-screen HLS playback (see the limitations below). When a stream
+  carries more than one audio feed, an audio track switch appears in the player (currently ch_07
+  and ch_14, shown as "English 1/2").
+- **Search:** movies and shows together, debounced, with All / Movies / Shows filters and
+  pagination.
+- **Details:** TMDB metadata and cast, content rating, a facts section (status, language,
+  seasons/episodes, budget/revenue) and a "Part of <collection>" row for movies in a franchise.
+  No playback.
+- **Favorites:** a heart on Details saves a title; the Favorites tab splits them into Movies and
+  TV Shows.
 - **About:** app description, TMDB logo and attribution.
+- Works on phones (bottom bar) and Android TV / tablets (navigation rail, D-pad focus).
+
+### Behaviour notes
+
 - Favorites are saved on the device only (SharedPreferences on Android, UserDefaults on iOS), as the
   title and poster path, so the list still shows offline. They are lost on uninstall; there is no
   sync.
-- Home rows and search results load more pages as you near the end. Results are cached in memory for
-  5 minutes; Retry always refetches, and if a refresh fails the last good result is shown instead.
-  Nothing is persisted across app restarts.
-- Search queries movies and shows together (debounced, no filters or pagination yet). Details show
-  TMDB metadata and cast only, with no playback.
+- TMDB results are cached in memory for 5 minutes. Retry always refetches, and if a refresh fails
+  the last good result is shown instead. Nothing is persisted across app restarts.
 
 ## Known limitations and findings
 
-**MP2 audio.** 15 of the 16 working channels carry MPEG-1 Layer II ("MP2") audio at 64-320 kbps
-(only ch_17 is AAC; ch_16 and ch_18 don't respond). Android isn't required to ship an MP2 decoder
+### MP2 audio
+
+**Problem.** 15 of the 16 working channels carry MPEG-1 Layer II ("MP2") audio at 64-320 kbps (only
+ch_17 is AAC; ch_16 and ch_18 don't respond). Android isn't required to ship an MP2 decoder
 and most phones don't, so ExoPlayer drops the audio track and plays the video silently, without
 reporting an error. This only showed up on a physical phone after the player was built.
 
-The app therefore carries its own small MP2 decoder (`shared/src/androidMain/.../player/audio`):
-`Mp2Decoder` is a Kotlin port of the audio decoder
-in [PL_MPEG](https://github.com/phoboslab/pl_mpeg)
-(MIT, Dominic Szablewski, itself based on kjmp2), plugged into ExoPlayer as an extra audio renderer
-that is only used when the device has no MP2 decoder of its own. Two things differ from PL_MPEG:
-requantisation follows ISO 11172-3 exactly (PL_MPEG under-scales coarse quantizers) and is done in
-floats. Tests compare the output with FFmpeg for 64, 96, 128, 192 and 320 kbps streams cut from the
-real channels (max error well under 16 LSB on 16-bit audio).
+**Fix.** The app carries its own small MP2 decoder (`shared/src/androidMain/.../player/audio`).
+`Mp2Decoder` is a Kotlin port of the audio decoder in
+[PL_MPEG](https://github.com/phoboslab/pl_mpeg) (MIT, Dominic Szablewski, itself based on kjmp2),
+plugged into ExoPlayer as an extra audio renderer that is only used when the device has no MP2
+decoder of its own.
 
-A second cause hit Rojava HD: its master playlist declares only `avc1` in `CODECS`, and ExoPlayer
+- Differences from PL_MPEG: requantisation follows ISO 11172-3 exactly (PL_MPEG under-scales coarse
+  quantizers) and is done in floats.
+- Tests compare the output with FFmpeg for 64, 96, 128, 192 and 320 kbps streams cut from the real
+  channels (max error well under 16 LSB on 16-bit audio).
+
+**Second cause (Rojava HD).** Its master playlist declares only `avc1` in `CODECS`, and ExoPlayer
 trusts that to skip audio when it prepares without downloading a segment. The player now disables
 chunkless preparation so the audio track is found in the stream.
 
-Alternatives that were ruled out: the Jellyfin FFmpeg extension (no MP2 decoder compiled in, and it
-needs an older Media3), and building Media3's own FFmpeg extension (needs the NDK and a committed
-binary).
+**Ruled out.** The Jellyfin FFmpeg extension (no MP2 decoder compiled in, and it needs an older
+Media3), and building Media3's own FFmpeg extension (needs the NDK and a committed binary).
 
-Not covered: joint-stereo streams share scale factors between channels in the intensity bands (none
-of the current channels use joint stereo), MPEG-2 (LSF) Layer II, and iOS, whose player is
-still a stub.
+**Not covered.**
+
+- Joint-stereo streams, which share scale factors between channels in the intensity bands (none of
+  the current channels use joint stereo)
+- MPEG-2 (LSF) Layer II
+- iOS, whose player is still a stub
 
 ## Structure
 
@@ -81,6 +98,11 @@ still a stub.
 ```
 ./gradlew :androidApp:assembleDebug
 ```
+
+A single APK (`androidApp/build/outputs/apk/debug/androidApp-debug.apk`) supports phones, tablets
+and
+Android TV: it declares both the standard and the Leanback launcher, and the UI adapts at runtime
+(bottom bar on phones, navigation rail on TV and wide screens). There are no separate flavors.
 
 ## Tests
 
