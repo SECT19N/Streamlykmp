@@ -2,6 +2,7 @@ package dev.section.streamly.player
 
 import android.content.Context
 import android.content.ContextWrapper
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
@@ -21,17 +22,33 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.ui.PlayerView
+import dev.section.streamly.ffmpeg.FfmpegLibrary
 import dev.section.streamly.player.audio.StreamlyRenderersFactory
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicBoolean
+
+private const val TAG = "LivePlayerSurface"
+
+/** True for init/decode failures of a video renderer, as opposed to network or parsing errors. */
+@OptIn(UnstableApi::class)
+private fun PlaybackException.isVideoDecoderFailure(): Boolean {
+    val rendererError = this as? ExoPlaybackException ?: return false
+    return rendererError.type == ExoPlaybackException.TYPE_RENDERER &&
+        rendererError.rendererFormat?.sampleMimeType?.let(MimeTypes::isVideo) == true &&
+        (errorCode == PlaybackException.ERROR_CODE_DECODER_INIT_FAILED ||
+            errorCode == PlaybackException.ERROR_CODE_DECODING_FAILED)
+}
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -48,7 +65,12 @@ actual fun LivePlayerSurface(
     val latestOnStatus by rememberUpdatedState(onStatus)
     val latestOnAudioTracks by rememberUpdatedState(onAudioTracks)
     val latestPlayWhenReady by rememberUpdatedState(playWhenReady)
-    val player = remember { ExoPlayer.Builder(context, StreamlyRenderersFactory(context)).build() }
+    // Flipped when a MediaCodec video decoder fails to start, so the retry uses FFmpeg instead.
+    val softwareVideoOnly = remember { AtomicBoolean(false) }
+    val player = remember {
+        ExoPlayer.Builder(context, StreamlyRenderersFactory(context) { softwareVideoOnly.get() })
+            .build()
+    }
 
     DisposableEffect(player) {
         val listener = object : Player.Listener {
@@ -69,6 +91,12 @@ actual fun LivePlayerSurface(
                 if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
                     // Standard live-HLS recovery: we fell behind the live window, rejoin the edge.
                     player.seekToDefaultPosition()
+                    player.prepare()
+                } else if (error.isVideoDecoderFailure() && FfmpegLibrary.isAvailable() &&
+                    softwareVideoOnly.compareAndSet(false, true)
+                ) {
+                    // MediaCodec said it could decode this but couldn't start: retry with FFmpeg.
+                    Log.w(TAG, "Hardware video decoder failed, retrying with FFmpeg", error)
                     player.prepare()
                 } else {
                     latestOnStatus(PlaybackStatus.Error(errorKindFor(error.errorCode)))

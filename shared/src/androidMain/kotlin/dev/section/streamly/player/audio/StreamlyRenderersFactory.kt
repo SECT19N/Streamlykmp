@@ -3,6 +3,7 @@ package dev.section.streamly.player.audio
 import android.content.Context
 import android.os.Handler
 import androidx.annotation.OptIn
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.Renderer
@@ -21,7 +22,17 @@ import dev.section.streamly.ffmpeg.FfmpegVideoRenderer
  * If the native libraries are missing they report every format as unsupported and stay out of the way.
  */
 @OptIn(UnstableApi::class)
-internal class StreamlyRenderersFactory(context: Context) : DefaultRenderersFactory(context) {
+internal class StreamlyRenderersFactory(
+    context: Context,
+    /** When true MediaCodec is hidden for video, so ExoPlayer selects [FfmpegVideoRenderer]. */
+    private val softwareVideoOnly: () -> Boolean = { false },
+) : DefaultRenderersFactory(context) {
+
+    init {
+        // If the best MediaCodec decoder fails to initialise, try the device's next one
+        // (typically the platform software decoder) before giving up.
+        setEnableDecoderFallback(true)
+    }
 
     override fun buildVideoRenderers(
         context: Context,
@@ -36,7 +47,7 @@ internal class StreamlyRenderersFactory(context: Context) : DefaultRenderersFact
         super.buildVideoRenderers(
             context,
             extensionRendererMode,
-            mediaCodecSelector,
+            hideVideoWhenSoftwareOnly(mediaCodecSelector),
             enableDecoderFallback,
             eventHandler,
             eventListener,
@@ -75,6 +86,20 @@ internal class StreamlyRenderersFactory(context: Context) : DefaultRenderersFact
         )
         out.add(FfmpegAudioRenderer(eventHandler, eventListener, audioSink))
     }
+
+    /**
+     * Some devices (notably emulators) advertise a video decoder that then fails to configure.
+     * The renderer is chosen when tracks are selected, so the only way to hand over to FFmpeg is to
+     * make MediaCodec report no video decoders and select tracks again.
+     */
+    private fun hideVideoWhenSoftwareOnly(delegate: MediaCodecSelector) =
+        MediaCodecSelector { mimeType, requiresSecureDecoder, requiresTunnelingDecoder ->
+            if (softwareVideoOnly() && MimeTypes.isVideo(mimeType)) {
+                emptyList()
+            } else {
+                delegate.getDecoderInfos(mimeType, requiresSecureDecoder, requiresTunnelingDecoder)
+            }
+        }
 
     private companion object {
         /** Same value DefaultRenderersFactory uses for its own video renderers. */
