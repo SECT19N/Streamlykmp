@@ -7,11 +7,11 @@ set(CMAKE_CXX_STANDARD 17)
 # Produced by scripts/build_ffmpeg.sh.
 set(ffmpeg_root "${CMAKE_CURRENT_SOURCE_DIR}/ffmpeg-build/${ANDROID_ABI}")
 
-foreach(ffmpeg_lib avcodec swscale swresample avutil)
+foreach (ffmpeg_lib avcodec swscale swresample avutil)
     add_library(${ffmpeg_lib} STATIC IMPORTED)
     set_target_properties(${ffmpeg_lib} PROPERTIES
             IMPORTED_LOCATION ${ffmpeg_root}/lib/lib${ffmpeg_lib}.a)
-endforeach()
+endforeach ()
 
 add_library(ffmpegJNI SHARED ffmpeg_jni.cc ffmpeg_video_jni.cc)
 
@@ -33,6 +33,6 @@ target_link_libraries(ffmpegJNI PRIVATE
 target_link_options(ffmpegJNI PRIVATE "-Wl,--exclude-libs,ALL")
 
 # See https://github.com/google/ExoPlayer/issues/9933#issuecomment-1029775358.
-if(ANDROID_ABI STREQUAL "arm64-v8a")
+if (ANDROID_ABI STREQUAL "arm64-v8a")
     target_link_options(ffmpegJNI PRIVATE "-Wl,-Bsymbolic")
-endif()
+endif ()
