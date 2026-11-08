@@ -17,3 +17,7 @@ captures
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 node_modules/
+
+# FFmpeg sources and static libraries built by ffmpeg/scripts/build_ffmpeg.sh
+ffmpeg/src/main/cpp/ffmpeg-src/
+ffmpeg/src/main/cpp/ffmpeg-build/

@@ -3,8 +3,6 @@
 Movies, TV shows (TMDB) and live TV (HLS) for Android mobile and Android TV, built with
 Kotlin Multiplatform and Compose Multiplatform. Architecture: MVI.
 
-See [ROADMAP.md](./ROADMAP.md) for planned work and progress.
-
 ## Assumptions
 
 - TMDB is used for browsing and metadata only; there is no VOD playback.
@@ -44,48 +42,53 @@ See [ROADMAP.md](./ROADMAP.md) for planned work and progress.
 
 ## Known limitations and findings
 
-### MP2 audio
+### MP2 audio and software video (FFmpeg)
 
 **Problem.** 15 of the 16 working channels carry MPEG-1 Layer II ("MP2") audio at 64-320 kbps (only
 ch_17 is AAC; ch_16 and ch_18 don't respond). Android isn't required to ship an MP2 decoder
 and most phones don't, so ExoPlayer drops the audio track and plays the video silently, without
-reporting an error. This only showed up on a physical phone after the player was built.
+reporting an error. The same applies to MPEG-2 video, and to H.264/HEVC profiles a device can't
+decode in hardware.
 
-**Fix.** The app carries its own small MP2 decoder (`shared/src/androidMain/.../player/audio`).
-`Mp2Decoder` is a Kotlin port of the audio decoder in
-[PL_MPEG](https://github.com/phoboslab/pl_mpeg) (MIT, Dominic Szablewski, itself based on kjmp2),
-plugged into ExoPlayer as an extra audio renderer that is only used when the device has no MP2
-decoder of its own.
+**Fix.** The `ffmpeg` module bundles a minimal FFmpeg (decoders only: MPEG-2 video, H.264, HEVC,
+MP1/MP2/MP3, AAC, AC-3/E-AC-3) through the NDK and plugs it into ExoPlayer as extra renderers
+(`StreamlyRenderersFactory`):
 
-- Differences from PL_MPEG: requantisation follows ISO 11172-3 exactly (PL_MPEG under-scales coarse
-  quantizers) and is done in floats.
-- Tests compare the output with FFmpeg for 64, 96, 128, 192 and 320 kbps streams cut from the real
-  channels (max error well under 16 LSB on 16-bit audio).
+- `FfmpegAudioRenderer`: adapted from Media3's FFmpeg extension (Apache-2.0), with Layer I/II mapped to
+  FFmpeg's `mp1`/`mp2` decoders (Media3 maps them to the Layer III decoder).
+- `FfmpegVideoRenderer`: written for this app, since Media3 has no FFmpeg video renderer. Frames are
+  decoded on up to 4 threads, normalised to 8-bit 4:2:0 and converted to RGBA straight into the
+  surface (swscale).
+
+Both are added **after** the MediaCodec renderers, so hardware/MediaCodec decoding is still used
+whenever the device supports the format; FFmpeg only takes over when it doesn't. Software video is
+CPU-heavy, so expect it to struggle on low-end devices with HD streams.
+
+FFmpeg is built LGPL-only (no `--enable-gpl`/`--enable-nonfree`) and statically linked into
+`libffmpegJNI.so`. See `ffmpeg/NOTICE.md`.
 
 **Second cause (Rojava HD).** Its master playlist declares only `avc1` in `CODECS`, and ExoPlayer
 trusts that to skip audio when it prepares without downloading a segment. The player now disables
 chunkless preparation so the audio track is found in the stream.
 
-**Ruled out.** The Jellyfin FFmpeg extension (no MP2 decoder compiled in, and it needs an older
-Media3), and building Media3's own FFmpeg extension (needs the NDK and a committed binary).
-
 **Not covered.**
 
-- Joint-stereo streams, which share scale factors between channels in the intensity bands (none of
-  the current channels use joint stereo)
-- MPEG-2 (LSF) Layer II
 - iOS, whose player is still a stub
+- Playlist `CODECS` that don't list MPEG-2 video (`mp2v`) may still be filtered out by ExoPlayer's HLS
+  track selection before a renderer is asked
 
 ## Structure
 
 - `androidApp`: Android entry point (mobile + TV)
 - `shared`: shared code and UI (`commonMain`), platform code (`androidMain`, `iosMain`)
+- `ffmpeg`: Android library with the FFmpeg NDK build and ExoPlayer renderers
 - `iosApp`: Xcode project (optional target, requires a Mac)
 
 ## Requirements
 
 - Android Studio with its bundled JBR (the system JDK may be too new for Gradle/AGP)
 - minSdk 23 (Android 6.0)
+- Android NDK 30.0.16248370 and CMake (install both with the SDK Manager), `git` and `make`
 - A free TMDB account. Add the **API Read Access Token** (the long v4 token) to `local.properties`:
   ```
   TmdbApiReadAccessToken=your_read_access_token
@@ -94,6 +97,18 @@ Media3), and building Media3's own FFmpeg extension (needs the NDK and a committ
   through BuildKonfig. If it is missing the app still builds, but Home shows the error state.
 
 ## Build
+
+FFmpeg is built once, outside Gradle (output is git-ignored, takes a few minutes per ABI):
+
+```
+ffmpeg/scripts/build_ffmpeg.sh            # arm64-v8a armeabi-v7a x86_64
+ffmpeg/scripts/build_ffmpeg.sh arm64-v8a  # or just the ABIs you need
+```
+
+Without it the project still builds, but FFmpeg decoding is unavailable (the renderers report
+every format as unsupported and playback falls back to MediaCodec only). The script checks out
+FFmpeg `n7.1.5`; override with `FFMPEG_TAG`. If you build fewer ABIs, adjust `abiFilters` in
+`ffmpeg/build.gradle.kts`.
 
 ```
 ./gradlew :androidApp:assembleDebug
@@ -108,6 +123,7 @@ Android TV: it declares both the standard and the Leanback launcher, and the UI 
 
 ```
 ./gradlew :shared:testAndroidHostTest
+./gradlew :ffmpeg:connectedDebugAndroidTest   # needs a device/emulator; MP2 vs reference PCM and H.264/HEVC/MPEG-2 playback
 ```
 
 ---

@@ -3,6 +3,8 @@ agp = "9.5.0"
 android-compileSdk = "37"
 android-minSdk = "23"
 android-targetSdk = "37"
+android-ndk = "30.0.16248370"
+android-cmake = "3.22.1+"
 androidx-activity = "1.13.0"
 androidx-appcompat = "1.8.0"
 androidx-core = "1.19.1"
@@ -65,8 +67,12 @@ navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-co
 media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
 media3-exoplayer-hls = { module = "androidx.media3:media3-exoplayer-hls", version.ref = "media3" }
 media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3" }
+media3-decoder = { module = "androidx.media3:media3-decoder", version.ref = "media3" }
+androidx-annotation = { module = "androidx.annotation:annotation", version = "1.9.1" }
+checker-qual = { module = "org.checkerframework:checker-qual", version = "3.49.5" }
 
 [plugins]
+androidLibrary = { id = "com.android.library", version.ref = "agp" }
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
